@@ -47,17 +47,31 @@ class MLInferenceEngine {
       final loveScore = (probs[2] * 100).round().clamp(0, 100);
       final confidence = probs[labelIdx].clamp(0.0, 1.0);
 
+      // ランク判定
+      final grade = _calculateGrade(loveScore);
+
+      // レーダーチャート用データ (0.0 - 1.0)
+      final radarData = {
+        '魅力': (features[0] / 10.0).clamp(0.1, 1.0),
+        '誠実': (features[1] / 10.0).clamp(0.1, 1.0),
+        '知性': (features[2] / 10.0).clamp(0.1, 1.0),
+        '楽しさ': (features[3] / 10.0).clamp(0.1, 1.0),
+        '共通点': (features[4] / 10.0).clamp(0.1, 1.0),
+      };
+
       final topFactors = _buildFactors(features);
       final graph      = _buildGraph(topFactors, loveScore);
       final cfs        = _buildCounterfactuals(loveScore);
       final actions    = _generateActions(label);
-      final script     = _generateScript(label, loveScore, topFactors);
+      final script     = _generateEnhancedScript(label, loveScore, topFactors, features);
 
       return InferenceResult(
         label: label,
         labelText: label.text,
         loveScore: loveScore,
         confidence: confidence,
+        compatibilityGrade: grade,
+        radarData: radarData,
         topFactors: topFactors,
         graph: graph,
         counterfactuals: cfs,
@@ -192,10 +206,47 @@ class MLInferenceEngine {
     }
   }
 
-  String _generateScript(Label label, int score, List<Factor> factors) {
-    String s = '判定は${label.text}！スコアは$score点なのだ。';
-    if (factors.isNotEmpty) s += '決め手は「${factors.first.title}」なのだ。';
-    s += '※コロンビア大学の速習デートデータをもとにした推論なのだ！';
+  String _calculateGrade(int score) {
+    if (score >= 85) return 'S';
+    if (score >= 70) return 'A';
+    if (score >= 50) return 'B';
+    if (score >= 30) return 'C';
+    return 'D';
+  }
+
+  String _generateEnhancedScript(Label label, int score, List<Factor> factors, List<double> features) {
+    String s = '判定結果は、ズバリ【${label.text}】！';
+    final grade = _calculateGrade(score);
+    
+    if (grade == 'S') {
+      s += '文句なしの相性Sランクなのだ！もう告白してもいいレベルなのだ。';
+    } else if (grade == 'A') {
+      s += 'かなりの高得点、Aランクなのだ！自信を持ってアタックするのだ。';
+    } else if (grade == 'B') {
+      s += '悪くないBランクなのだ。でも、ここからが正念場なのだ！';
+    } else if (grade == 'C') {
+      s += '今はCランク...まだ「友達」の枠を出ていない可能性があるのだ。';
+    } else {
+      s += '厳しいDランクなのだ。一度引いて、戦略を練り直すべきなのだ。';
+    }
+
+    if (factors.isNotEmpty) {
+      final best = factors.first;
+      if (best.scoreImpact > 10) {
+        s += '特に「${best.title}」が最高に効いているのだ。ここは強みなのだ！';
+      } else if (best.scoreImpact < -10) {
+        s += '逆に「${best.title}」が足を引っ張っているみたいなのだ。気をつけるのだ。';
+      }
+    }
+
+    // 特徴量に基づいた具体的な一言
+    if (features[1] < 4.0) { // 誠実さが低い
+      s += 'ちょっとチャラいと思われてるかもしれないのだ。真面目さをアピールするのだ！';
+    } else if (features[4] < 4.0) { // 共通点が少ない
+      s += '共通の話題が足りないみたいなのだ。相手の趣味をもっとリサーチするのだ。';
+    }
+
+    s += '※この診断はコロンビア大学の実データに基づいた、ボクのガチ推論なのだ！';
     return s;
   }
 }

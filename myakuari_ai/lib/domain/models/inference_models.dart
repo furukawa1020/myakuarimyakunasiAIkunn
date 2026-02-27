@@ -104,6 +104,8 @@ class InferenceResult {
   final String labelText;
   final int loveScore;
   final double confidence;
+  final String compatibilityGrade; // S, A, B, C, D
+  final Map<String, double> radarData; // 5次元データ
   final List<Factor> topFactors;
   final GraphData graph;
   final List<Counterfactual> counterfactuals;
@@ -115,6 +117,8 @@ class InferenceResult {
     required this.labelText,
     required this.loveScore,
     required this.confidence,
+    required this.compatibilityGrade,
+    required this.radarData,
     required this.topFactors,
     required this.graph,
     required this.counterfactuals,
