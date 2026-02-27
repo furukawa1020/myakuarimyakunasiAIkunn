@@ -8,7 +8,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 /// PC上でVoicevox Engineを起動し、同一Wi-Fi内のAndroid実機から接続して使う。
 class RemoteVoicevoxService {
   static const int _zundamonStyleId = 3;
-  static const String _defaultBaseUrl = 'http://127.0.0.1:50021';
+  static const String _defaultBaseUrl = 'http://10.0.2.2:50021';
 
   final AudioPlayer _audioPlayer = AudioPlayer();
   String _baseUrl = _defaultBaseUrl;
