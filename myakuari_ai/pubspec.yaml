@@ -74,6 +74,7 @@ flutter:
     - assets/images/char/
     - assets/voicevox/
     - assets/audio/
+    - assets/ml/
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images

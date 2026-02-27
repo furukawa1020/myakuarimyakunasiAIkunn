@@ -1,6 +1,7 @@
 import 'dart:math';
 
 import 'models/inference_models.dart';
+import 'ml_inference_engine.dart';
 
 class InferenceEngine {
   static const int _baseScore = 50;
@@ -19,8 +20,20 @@ class InferenceEngine {
     return null;
   }
 
-  /// メインの推論処理
+  /// メインの推論処理 (MLエンジン優先 → ルールベースフォールバック)
   static InferenceResult analyze(InferenceInput input) {
+    // MLエンジンが読み込まれていれば優先して使用
+    final ml = MLInferenceEngine.instance;
+    if (ml.isLoaded) {
+      final result = ml.analyze(input);
+      if (result != null) return result;
+    }
+
+    // フォールバック: ルールベース推論
+    return _ruleBasedAnalyze(input);
+  }
+
+  static InferenceResult _ruleBasedAnalyze(InferenceInput input) {
     // 1. 特徴量（Factors）の抽出
     List<Factor> factors = _extractFactors(input);
 
