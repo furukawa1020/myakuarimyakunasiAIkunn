@@ -1,3 +1,7 @@
+"""
+caracter.png を一枚ずつの表情に切り出すスクリプト。
+スプライトシートの構造を確認し、列（横）ごとに全身を1ファイルとして保存する。
+"""
 import cv2
 import numpy as np
 import os
@@ -8,77 +12,74 @@ out_dir = r'c:\Projects\myakuarimyakunasiAIkunn\myakuari_ai\assets\images\char'
 if not os.path.exists(out_dir):
     os.makedirs(out_dir)
 
-# Clear old chars
+# まず既存の出力ファイルを全削除
 for f in os.listdir(out_dir):
     os.remove(os.path.join(out_dir, f))
 
 img = cv2.imread(image_path, cv2.IMREAD_UNCHANGED)
 if img is None:
-    print("Failed to load image.")
+    print("ERROR: Failed to load image.")
     exit(1)
 
-if img.shape[2] == 3:
+h, w = img.shape[:2]
+print(f"Image size: {w}x{h}, channels: {img.shape[2]}")
+
+# アルファチャンネルを取得
+if img.shape[2] == 4:
+    alpha = img[:, :, 3]
+else:
     gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
     _, alpha = cv2.threshold(gray, 240, 255, cv2.THRESH_BINARY_INV)
-    img = cv2.cvtColor(img, cv2.COLOR_BGR2BGRA)
-    img[:, :, 3] = alpha
-else:
-    alpha = img[:, :, 3]
 
-# 1. Project alpha onto X-axis to find character columns
-threshold = 100
+# X軸投影でキャラクター列を検出
+threshold = 50
 col_sums = np.sum(alpha, axis=0)
-is_char_x = col_sums > threshold
+is_char = col_sums > threshold
 
+# 列のグループ（キャラクターの「帯」）を見つける
 x_regions = []
 start = None
-for i, val in enumerate(is_char_x):
+for i, val in enumerate(is_char):
     if val and start is None:
         start = i
     elif not val and start is not None:
         x_regions.append((start, i))
         start = None
 if start is not None:
-    x_regions.append((start, len(is_char_x)))
+    x_regions.append((start, w))
 
-x_regions = [r for r in x_regions if r[1] - r[0] > 50]
+# 小さすぎるノイズは除外
+x_regions = [r for r in x_regions if r[1] - r[0] > 30]
 
-char_count = 0
-for x_start, x_end in x_regions:
+print(f"\nDetected {len(x_regions)} character columns:")
+for i, (xs, xe) in enumerate(x_regions):
+    print(f"  Col {i}: x={xs}..{xe} (width={xe-xs})")
+
+# 各キャラクター列の「全体の縦範囲」を使って全身を1ファイルに保存
+pad = 3
+for i, (x_start, x_end) in enumerate(x_regions):
     col_alpha = alpha[:, x_start:x_end]
     row_sums = np.sum(col_alpha, axis=1)
+    y_indices = np.where(row_sums > threshold)[0]
     
-    is_char_y = row_sums > threshold
+    if len(y_indices) == 0:
+        print(f"  Col {i}: EMPTY, skipping")
+        continue
     
-    y_regions = []
-    y_start_idx = None
-    for i, val in enumerate(is_char_y):
-        if val and y_start_idx is None:
-            y_start_idx = i
-        elif not val and y_start_idx is not None:
-            y_regions.append((y_start_idx, i))
-            y_start_idx = None
-    if y_start_idx is not None:
-        y_regions.append((y_start_idx, len(is_char_y)))
-        
-    y_regions = [r for r in y_regions if r[1] - r[0] > 50]
+    y_start = max(0, y_indices[0] - pad)
+    y_end   = min(h, y_indices[-1] + 1 + pad)
     
-    for y_start, y_end in y_regions:
-        pad = 5
-        x1 = max(0, x_start - pad)
-        y1 = max(0, y_start - pad)
-        x2 = min(img.shape[1], x_end + pad)
-        y2 = min(img.shape[0], y_end + pad)
-        
-        cropped = img[y1:y2, x1:x2]
-        
-        # Double check if the cropped image is mostly empty
-        if np.sum(cropped[:, :, 3]) < 1000:
-            continue
-            
-        out_path = os.path.join(out_dir, f'char_{char_count}.png')
-        cv2.imwrite(out_path, cropped)
-        print(f"Saved {out_path} (size: {cropped.shape[1]}x{cropped.shape[0]})")
-        char_count += 1
+    x1 = max(0, x_start - pad)
+    x2 = min(w, x_end   + pad)
+    
+    cropped = img[y_start:y_end, x1:x2]
+    out_path = os.path.join(out_dir, f'char_{i}.png')
+    cv2.imwrite(out_path, cropped)
+    print(f"  Saved: {out_path}  ({cropped.shape[1]}x{cropped.shape[0]}px)")
 
-print(f"Detected {char_count} individual expressions in total.")
+# 確認のため全ファイル一覧を表示
+print("\nOutput files:")
+for f in sorted(os.listdir(out_dir)):
+    fp = os.path.join(out_dir, f)
+    size_kb = os.path.getsize(fp) // 1024
+    print(f"  {f}  ({size_kb} KB)")
