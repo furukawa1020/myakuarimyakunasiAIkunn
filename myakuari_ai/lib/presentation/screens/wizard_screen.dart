@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../domain/models/inference_models.dart';
-import '../../domain/voicevox_service.dart';
+import '../../domain/remote_voicevox_service.dart';
 import 'loading_screen.dart';
 import '../widgets/character_view.dart';
 import '../widgets/glass_card.dart';
@@ -48,12 +48,10 @@ class _WizardScreenState extends State<WizardScreen> {
 
   Future<void> _initTts() async {
     try {
-      _tts = LocalVoicevoxService();
+      _tts = RemoteVoicevoxService();
       await _tts!.initialize();
       _speak(0);
-    } catch (_) {
-      // エミュレーター等、TTSが使えない環境ではスキップ
-    }
+    } catch (_) {}
   }
 
   Future<void> _speak(int pageIndex) async {
