@@ -73,26 +73,40 @@ class _CharacterViewState extends ConsumerState<CharacterView> with SingleTicker
     switch (widget.state) {
       case CharacterState.announceBad:
       case CharacterState.down:
-        // 悲しい
-        imagePath = 'assets/images/char/char_2.png';
+        // 悲しい・ショック (col2, row2)
+        imagePath = 'assets/images/char/char_8.png';
         filter = const ColorFilter.mode(Colors.grey, BlendMode.saturation);
         break;
       case CharacterState.announceGood:
-      case CharacterState.listening:
-        // 嬉しい・身を乗り出す
-        imagePath = 'assets/images/char/char_3.png';
+        // 最高に嬉しい (col3, row0)
+        imagePath = 'assets/images/char/char_9.png';
         scale = 1.05;
         break;
+      case CharacterState.listening:
+        // 耳を傍けて聞く (col3, row1)
+        imagePath = 'assets/images/char/char_10.png';
+        scale = 1.02;
+        break;
       case CharacterState.announceNeutral:
-      case CharacterState.question:
-        // 疑問・中立
+        // 中立 (col0, row1)
         imagePath = 'assets/images/char/char_1.png';
         break;
+      case CharacterState.question:
+        // 疑問・考え中 (col1, row1)
+        imagePath = 'assets/images/char/char_4.png';
+        rotation = 0.08;
+        break;
       case CharacterState.thinking:
+        // 思考中 (col1, row2)
+        imagePath = 'assets/images/char/char_5.png';
+        break;
       case CharacterState.closing:
+        // 閉じる (col3, row2)
+        imagePath = 'assets/images/char/char_11.png';
+        break;
       case CharacterState.idle:
       default:
-        // 待機・思考
+        // 待機 (col0, row0)
         imagePath = 'assets/images/char/char_0.png';
         break;
     }
