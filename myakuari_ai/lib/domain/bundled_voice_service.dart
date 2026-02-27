@@ -1,6 +1,7 @@
+import 'dart:math';
 import 'package:audioplayers/audioplayers.dart';
 
-/// アプリに同梱済みのWAVファイルを再生する。
+/// アプリに同梱済みのWAVファイルをランダム選択して再生する。
 /// ネット接続不要・Voicevox Engine起動不要。
 class BundledVoiceService {
   static final BundledVoiceService _instance = BundledVoiceService._internal();
@@ -8,39 +9,62 @@ class BundledVoiceService {
   BundledVoiceService._internal();
 
   final AudioPlayer _player = AudioPlayer();
+  final Random _rng = Random();
 
-  /// ウィザード質問の音声キー（ページ番号→ファイル名マッピング）
-  static const List<String> questionKeys = [
-    'q_who',
-    'q_what',
-    'q_when',
-    'q_where',
-    'q_why',
-    'q_how',
-  ];
+  /// カテゴリ→バリエーションリストのマッピング
+  static const Map<String, List<String>> _variants = {
+    // ホーム
+    'home': ['home_1', 'home_2', 'home_3'],
 
-  /// 状態→音声ファイルのマッピング
-  static const Map<String, String> namedKeys = {
-    'loading':        'loading',
-    'result_good':    'result_good',
-    'result_bad':     'result_bad',
-    'result_neutral': 'result_neutral',
+    // ウィザード質問
+    'q_who':   ['q_who_1',   'q_who_2',   'q_who_3'],
+    'q_what':  ['q_what_1',  'q_what_2',  'q_what_3'],
+    'q_when':  ['q_when_1',  'q_when_2',  'q_when_3'],
+    'q_where': ['q_where_1', 'q_where_2', 'q_where_3'],
+    'q_why':   ['q_why_1',   'q_why_2',   'q_why_3'],
+    'q_how':   ['q_how_1',   'q_how_2',   'q_how_3'],
+
+    // 回答後
+    'thanks': ['thanks_1', 'thanks_2', 'thanks_3'],
+
+    // ローディング
+    'loading': ['loading_1', 'loading_2', 'loading_3', 'loading_4'],
+
+    // 脈アリ
+    'result_good':    ['result_good_1',    'result_good_2',    'result_good_3',    'result_good_4'],
+
+    // 脈ナシ
+    'result_bad':     ['result_bad_1',     'result_bad_2',     'result_bad_3'],
+
+    // 中立
+    'result_neutral': ['result_neutral_1', 'result_neutral_2', 'result_neutral_3'],
   };
 
-  Future<void> playQuestion(int pageIndex) async {
-    if (pageIndex < 0 || pageIndex >= questionKeys.length) return;
-    await _play(questionKeys[pageIndex]);
+  /// ウィザードページ番号→カテゴリキー
+  static const List<String> _questionKeys = [
+    'q_who', 'q_what', 'q_when', 'q_where', 'q_why', 'q_how',
+  ];
+
+  String _pick(String category) {
+    final list = _variants[category];
+    if (list == null || list.isEmpty) return category;
+    return list[_rng.nextInt(list.length)];
   }
 
-  Future<void> playNamed(String key) async {
-    await _play(key);
+  Future<void> playQuestion(int pageIndex) async {
+    if (pageIndex < 0 || pageIndex >= _questionKeys.length) return;
+    await _play(_pick(_questionKeys[pageIndex]));
+  }
+
+  Future<void> playNamed(String category) async {
+    await _play(_pick(category));
   }
 
   Future<void> _play(String key) async {
     try {
       await _player.stop();
       await _player.play(AssetSource('audio/$key.wav'));
-    } catch (e) {
+    } catch (_) {
       // 音声ファイルが存在しない場合は無視
     }
   }
