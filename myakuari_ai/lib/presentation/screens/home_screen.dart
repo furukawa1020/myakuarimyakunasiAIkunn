@@ -70,10 +70,7 @@ class HomeScreen extends StatelessWidget {
                     margin: EdgeInsets.zero,
                     borderColor: const Color(0xFF00FFFF).withOpacity(0.3),
                     child: const Text(
-                      'グッときたあの一言、どう思えます？
-ランチに誘われた、LINEga続いてる、止まってる…
-eventsをAI小子が心理学的に分析して、脈アリ・脈ナシとその理由、
-次に取るべき行動まで悕えます！',
+                      'グッときたあのひと言が、気になっていませんか？\nランチに誘われた、LINEが続いてる、急に止まった…\nそのできごとをAIが分析して、脈アリ・脈ナシの判定と\n"次にどうすればいいか"まで教えてくれます！',
                       style: TextStyle(fontSize: 15, color: Colors.white, height: 1.7),
                     ),
                   ),
