@@ -15,7 +15,7 @@ class WizardScreen extends StatefulWidget {
 class _WizardScreenState extends State<WizardScreen> {
   final PageController _pageController = PageController();
   int _currentPage = 0;
-  LocalVoicevoxService? _tts;
+  RemoteVoicevoxService? _tts;
 
   // 各質問ページのずんだもんセリフ
   static const List<String> _questionLines = [
