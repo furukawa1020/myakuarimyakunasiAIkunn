@@ -71,36 +71,28 @@ class _CharacterViewState extends ConsumerState<CharacterView> with SingleTicker
     String imagePath = 'assets/images/char/char_0.png';
 
     switch (widget.state) {
-      case CharacterState.down:
-        imagePath = 'assets/images/char/char_8.png';
-        filter = const ColorFilter.mode(Colors.grey, BlendMode.saturation);
-        break;
       case CharacterState.announceBad:
+      case CharacterState.down:
+        // 悲しい
         imagePath = 'assets/images/char/char_2.png';
         filter = const ColorFilter.mode(Colors.grey, BlendMode.saturation);
         break;
       case CharacterState.announceGood:
-        imagePath = 'assets/images/char/char_9.png';
-        break;
-      case CharacterState.announceNeutral:
-        imagePath = 'assets/images/char/char_1.png';
-        break;
       case CharacterState.listening:
+        // 嬉しい・身を乗り出す
         imagePath = 'assets/images/char/char_3.png';
         scale = 1.05;
         break;
+      case CharacterState.announceNeutral:
       case CharacterState.question:
-        imagePath = 'assets/images/char/char_4.png';
-        rotation = 0.1;
+        // 疑問・中立
+        imagePath = 'assets/images/char/char_1.png';
         break;
       case CharacterState.thinking:
-        imagePath = 'assets/images/char/char_5.png';
-        break;
       case CharacterState.closing:
-        imagePath = 'assets/images/char/char_11.png';
-        break;
       case CharacterState.idle:
       default:
+        // 待機・思考
         imagePath = 'assets/images/char/char_0.png';
         break;
     }
