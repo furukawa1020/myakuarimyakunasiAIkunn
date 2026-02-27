@@ -3,6 +3,7 @@ import '../../domain/models/inference_models.dart';
 import '../../domain/inference_engine.dart';
 import '../widgets/character_view.dart';
 import 'result_screen.dart';
+import '../../domain/ml_inference_engine.dart';
 
 class LoadingScreen extends StatefulWidget {
   final InferenceInput input;
@@ -25,10 +26,15 @@ class _LoadingScreenState extends State<LoadingScreen> {
   Future<void> _processInference() async {
     // 演出のための擬似ロード時間
     await Future.delayed(const Duration(seconds: 1));
-    if (mounted) setState(() => _statusMessage = '特徴量を抽出中...');
+    if (mounted) setState(() => _statusMessage = 'AIモデルをロード中...');
     
+    // MLエンジンのロード
+    await MLInferenceEngine.instance.load();
+
+    if (mounted) setState(() => _statusMessage = '特徴量を抽出中...');
     await Future.delayed(const Duration(milliseconds: 800));
-    if (mounted) setState(() => _statusMessage = '反事実シミュレーション実行中...');
+    
+    if (mounted) setState(() => _statusMessage = '実データに基づき推論中...');
 
     // 実際の推論
     final String? safetyError = InferenceEngine.checkSafety(widget.input);
