@@ -28,11 +28,11 @@ class HomeScreen extends StatelessWidget {
             ),
           ),
           
-          // Mascot overlay placeholder
+          // Mascot
           Positioned(
-            right: -60,
-            bottom: -20,
-            height: MediaQuery.of(context).size.height * 0.55,
+            right: -20,
+            bottom: 80,
+            height: MediaQuery.of(context).size.height * 0.45,
             child: const CharacterView(state: CharacterState.idle),
           ),
 
@@ -70,8 +70,11 @@ class HomeScreen extends StatelessWidget {
                     margin: EdgeInsets.zero,
                     borderColor: const Color(0xFF00FFFF).withOpacity(0.3),
                     child: const Text(
-                      '「5W1Hから特徴量を抽出し、端末内で確率推論・反事実解析・推論グラフ生成まで実行して、脈アリ度・根拠・次の一手をExplainableに返す、完全ローカル恋愛推論AIです。」',
-                      style: TextStyle(fontSize: 15, color: Colors.white, height: 1.6),
+                      'グッときたあの一言、どう思えます？
+ランチに誘われた、LINEga続いてる、止まってる…
+eventsをAI小子が心理学的に分析して、脈アリ・脈ナシとその理由、
+次に取るべき行動まで悕えます！',
+                      style: TextStyle(fontSize: 15, color: Colors.white, height: 1.7),
                     ),
                   ),
                   const Spacer(),
