@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import '../../domain/models/inference_models.dart';
 import '../widgets/character_view.dart';
 import 'home_screen.dart';
-import '../../domain/voicevox_service.dart';
+import '../../domain/bundled_voice_service.dart';
 import '../widgets/glass_card.dart';
 
 class ResultScreen extends StatefulWidget {
@@ -22,10 +22,13 @@ class _ResultScreenState extends State<ResultScreen> {
   }
 
   Future<void> _playVoice() async {
-    final tts = LocalVoicevoxService();
-    // In a real app we would call initialize() during splash screen.
-    await tts.initialize(); 
-    await tts.speak(widget.result.spokenScript);
+    final tts = BundledVoiceService();
+    final key = widget.result.label == Label.like
+        ? 'result_good'
+        : widget.result.label == Label.neutral
+            ? 'result_neutral'
+            : 'result_bad';
+    await tts.playNamed(key);
   }
 
   @override

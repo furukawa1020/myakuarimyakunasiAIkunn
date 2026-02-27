@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../domain/models/inference_models.dart';
-import '../../domain/remote_voicevox_service.dart';
+import '../../domain/bundled_voice_service.dart';
 import 'loading_screen.dart';
 import '../widgets/character_view.dart';
 import '../widgets/glass_card.dart';
@@ -15,7 +15,7 @@ class WizardScreen extends StatefulWidget {
 class _WizardScreenState extends State<WizardScreen> {
   final PageController _pageController = PageController();
   int _currentPage = 0;
-  RemoteVoicevoxService? _tts;
+  BundledVoiceService? _tts;
 
   // 各質問ページのずんだもんセリフ
   static const List<String> _questionLines = [
@@ -48,19 +48,16 @@ class _WizardScreenState extends State<WizardScreen> {
 
   Future<void> _initTts() async {
     try {
-      _tts = RemoteVoicevoxService();
-      await _tts!.initialize();
+      _tts = BundledVoiceService();
       _speak(0);
     } catch (_) {}
   }
 
   Future<void> _speak(int pageIndex) async {
     if (_tts == null) return;
-    if (pageIndex < _questionLines.length) {
-      try {
-        await _tts!.speak(_questionLines[pageIndex]);
-      } catch (_) {}
-    }
+    try {
+      await _tts!.playQuestion(pageIndex);
+    } catch (_) {}
   }
 
   @override
