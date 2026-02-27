@@ -2,18 +2,37 @@ import 'package:flutter/material.dart';
 import '../../domain/models/inference_models.dart';
 import '../widgets/character_view.dart';
 import 'home_screen.dart';
+import '../../domain/voicevox_service.dart';
 
-class ResultScreen extends StatelessWidget {
+class ResultScreen extends StatefulWidget {
   final InferenceResult result;
 
   const ResultScreen({super.key, required this.result});
 
   @override
+  State<ResultScreen> createState() => _ResultScreenState();
+}
+
+class _ResultScreenState extends State<ResultScreen> {
+  @override
+  void initState() {
+    super.initState();
+    _playVoice();
+  }
+
+  Future<void> _playVoice() async {
+    final tts = LocalVoicevoxService();
+    // In a real app we would call initialize() during splash screen.
+    await tts.initialize(); 
+    await tts.speak(widget.result.spokenScript);
+  }
+
+  @override
   Widget build(BuildContext context) {
     CharacterState charState;
-    if (result.label == Label.like) {
+    if (widget.result.label == Label.like) {
       charState = CharacterState.announceGood;
-    } else if (result.label == Label.neutral) {
+    } else if (widget.result.label == Label.neutral) {
       charState = CharacterState.announceNeutral;
     } else {
       charState = CharacterState.announceBad;
@@ -21,7 +40,7 @@ class ResultScreen extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('推論結果'),
+        title: const Text('恋愛推論結果'),
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
@@ -78,15 +97,15 @@ class ResultScreen extends StatelessWidget {
 
   Widget _buildScoreSection() {
     Color labelColor = Colors.white;
-    if (result.label == Label.like) labelColor = const Color(0xFFFF007F);
-    if (result.label == Label.neutral) labelColor = const Color(0xFF00FFFF);
-    if (result.label == Label.nope) labelColor = Colors.blueGrey;
+    if (widget.result.label == Label.like) labelColor = const Color(0xFFFF007F);
+    if (widget.result.label == Label.neutral) labelColor = const Color(0xFF00FFFF);
+    if (widget.result.label == Label.nope) labelColor = Colors.blueGrey;
 
     return Center(
       child: Column(
         children: [
           Text(
-            result.labelText,
+            widget.result.labelText,
             style: TextStyle(
               fontSize: 64,
               fontWeight: FontWeight.w900,
@@ -95,12 +114,12 @@ class ResultScreen extends StatelessWidget {
             ),
           ),
           Text(
-            'SCORE: ${result.loveScore}',
+            'SCORE: ${widget.result.loveScore}',
             style: const TextStyle(fontSize: 32, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 8),
           Text(
-            '推論自信度: ${(result.confidence * 100).toInt()}%',
+            '推論自信度: ${(widget.result.confidence * 100).toInt()}%',
             style: const TextStyle(fontSize: 14, color: Colors.grey),
           ),
         ],
@@ -117,7 +136,7 @@ class ResultScreen extends StatelessWidget {
           style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Color(0xFF00FFFF)),
         ),
         const SizedBox(height: 16),
-        ...result.topFactors.map((f) => Card(
+        ...widget.result.topFactors.map((f) => Card(
               margin: const EdgeInsets.only(bottom: 12),
               color: const Color(0xFF1E1E1E),
               child: ListTile(
@@ -146,7 +165,7 @@ class ResultScreen extends StatelessWidget {
           style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Color(0xFF00FFFF)),
         ),
         const SizedBox(height: 16),
-        ...result.counterfactuals.map((cf) => Container(
+        ...widget.result.counterfactuals.map((cf) => Container(
               margin: const EdgeInsets.only(bottom: 12),
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
@@ -163,7 +182,7 @@ class ResultScreen extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(cf.description, style: const TextStyle(fontSize: 16)),
-                        Text('予想スコア: ${result.loveScore} → ${cf.newScore}',
+                        Text('予想スコア: ${widget.result.loveScore} → ${cf.newScore}',
                             style: const TextStyle(fontWeight: FontWeight.bold)),
                       ],
                     ),
@@ -184,7 +203,7 @@ class ResultScreen extends StatelessWidget {
           style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Color(0xFF00FFFF)),
         ),
         const SizedBox(height: 16),
-        ...result.nextActions.map((action) => Padding(
+        ...widget.result.nextActions.map((action) => Padding(
               padding: const EdgeInsets.only(bottom: 8.0),
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,

@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 
 import 'wizard_screen.dart';
+import 'history_screen.dart';
+import 'settings_screen.dart';
+import 'about_screen.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -77,6 +80,19 @@ class HomeScreen extends StatelessWidget {
                     ),
                   ),
                   const Spacer(),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      IconButton(
+                        icon: const Icon(Icons.info_outline, color: Colors.white70),
+                        onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const AboutScreen())),
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.settings, color: Colors.white70),
+                        onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const SettingsScreen())),
+                      ),
+                    ],
+                  ),
                   SizedBox(
                     width: double.infinity,
                     height: 60,
@@ -102,7 +118,7 @@ class HomeScreen extends StatelessWidget {
                   Center(
                     child: TextButton(
                       onPressed: () {
-                        // History navigation
+                        Navigator.push(context, MaterialPageRoute(builder: (_) => const HistoryScreen()));
                       },
                       child: const Text('履歴を見る', style: TextStyle(color: Colors.white70)),
                     ),
