@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../domain/models/inference_models.dart';
+import '../../domain/voicevox_service.dart';
 import 'loading_screen.dart';
 import '../widgets/character_view.dart';
 import '../widgets/glass_card.dart';
@@ -14,6 +15,17 @@ class WizardScreen extends StatefulWidget {
 class _WizardScreenState extends State<WizardScreen> {
   final PageController _pageController = PageController();
   int _currentPage = 0;
+  LocalVoicevoxService? _tts;
+
+  // 各質問ページのずんだもんセリフ
+  static const List<String> _questionLines = [
+    'まず、気になっている相手は誰なのだ！関係性を教えてほしいのだ！',
+    'なるほどー。で、何があったのだ？詳しく教えてほしいのだ！',
+    'ふむふむ。それはいつのことなのだ？',
+    'どんな場面だったのだ？LINE？直接？',
+    'どうしてそう感じたのだ？自分の解釈を教えてほしいのだ！',
+    'なるほどなのだ！どんな流れで起きたのだ？',
+  ];
 
   // Answers
   String _who = '';
@@ -27,6 +39,37 @@ class _WizardScreenState extends State<WizardScreen> {
   String _concreteness = '';
   String _continuation = '';
   int _evidenceLevel = 3;
+
+  @override
+  void initState() {
+    super.initState();
+    _initTts();
+  }
+
+  Future<void> _initTts() async {
+    try {
+      _tts = LocalVoicevoxService();
+      await _tts!.initialize();
+      _speak(0);
+    } catch (_) {
+      // エミュレーター等、TTSが使えない環境ではスキップ
+    }
+  }
+
+  Future<void> _speak(int pageIndex) async {
+    if (_tts == null) return;
+    if (pageIndex < _questionLines.length) {
+      try {
+        await _tts!.speak(_questionLines[pageIndex]);
+      } catch (_) {}
+    }
+  }
+
+  @override
+  void dispose() {
+    _tts?.dispose();
+    super.dispose();
+  }
 
   void _nextPage() {
     if (_currentPage < 5) {
@@ -96,7 +139,10 @@ class _WizardScreenState extends State<WizardScreen> {
                   child: PageView(
                     controller: _pageController,
                     physics: const NeverScrollableScrollPhysics(), // Disable swipe
-                    onPageChanged: (idx) => setState(() => _currentPage = idx),
+                  onPageChanged: (idx) {
+                    setState(() => _currentPage = idx);
+                    _speak(idx);
+                  },
                     children: [
                       _buildTextQuestion('Who', '相手は誰？関係性は？', '例: 職場の同僚でよく話す仲', (val) => _who = val, _who),
                       _buildTextQuestion('What', '何があったの？', '例: ランチに誘われた', (val) => _what = val, _what),
