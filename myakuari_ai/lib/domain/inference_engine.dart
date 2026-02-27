@@ -78,12 +78,32 @@ class InferenceEngine {
       labelText: label.text,
       loveScore: finalScore,
       confidence: confidence,
+      compatibilityGrade: _ruleBasedGrade(finalScore),
+      radarData: _generateFallbackRadarData(input),
       topFactors: topFactors,
       graph: graph,
       counterfactuals: counterfactuals,
       nextActions: nextActions,
       spokenScript: script,
     );
+  }
+
+  static String _ruleBasedGrade(int score) {
+    if (score >= 80) return 'S';
+    if (score >= 65) return 'A';
+    if (score >= 50) return 'B';
+    if (score >= 35) return 'C';
+    return 'D';
+  }
+
+  static Map<String, double> _generateFallbackRadarData(InferenceInput input) {
+    return {
+      '魅力': 0.5,
+      '誠実': 0.5,
+      '知性': 0.5,
+      '楽しさ': 0.5,
+      '共通点': 0.5,
+    };
   }
 
   static List<Factor> _extractFactors(InferenceInput input) {
