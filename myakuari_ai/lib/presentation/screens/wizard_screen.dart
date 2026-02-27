@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../domain/models/inference_models.dart';
 import 'loading_screen.dart';
 import '../widgets/character_view.dart';
+import '../widgets/glass_card.dart';
 
 class WizardScreen extends StatefulWidget {
   const WizardScreen({super.key});
@@ -28,7 +29,7 @@ class _WizardScreenState extends State<WizardScreen> {
   int _evidenceLevel = 3;
 
   void _nextPage() {
-    if (_currentPage < 10) {
+    if (_currentPage < 5) {
       _pageController.nextPage(duration: const Duration(milliseconds: 300), curve: Curves.easeInOut);
     } else {
       // Done, submit
@@ -57,12 +58,24 @@ class _WizardScreenState extends State<WizardScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('質問 ${_currentPage + 1} / 11'),
+        title: Text('質問 ${_currentPage + 1} / 6'),
         backgroundColor: Colors.transparent,
         elevation: 0,
       ),
       body: Stack(
         children: [
+          // Background
+          Positioned.fill(
+            child: Container(
+              decoration: const BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [Color(0xFF1A1A2E), Color(0xFF16213E), Color(0xFF0F3460)],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+              ),
+            ),
+          ),
           // Mascot
           Positioned(
             right: -60,
@@ -75,7 +88,7 @@ class _WizardScreenState extends State<WizardScreen> {
             child: Column(
               children: [
                 LinearProgressIndicator(
-                  value: (_currentPage + 1) / 11,
+                  value: (_currentPage + 1) / 6,
                   backgroundColor: Colors.grey[800],
                   valueColor: const AlwaysStoppedAnimation<Color>(Color(0xFF00FFFF)),
                 ),
@@ -91,12 +104,6 @@ class _WizardScreenState extends State<WizardScreen> {
                       _buildChoiceQuestion('Where', 'どんな文脈？', ['対面', 'LINE', '通話', '飲み', '職場/学校', 'その他'], (val) => _where = val, _where),
                       _buildTextQuestion('Why', 'どうしてそう思った？（自分の解釈）', '例: 普段誘ってこないのに珍しい', (val) => _why = val, _why),
                       _buildTextQuestion('How', 'どんな流れだった？', '例: 趣味の話から自然な流れで', (val) => _how = val, _how),
-                      
-                      _buildSliderQuestion('連絡頻度', '普段の連絡頻度は？ (1:低い - 5:高い)', (val) => _contactFrequency = val.toInt(), _contactFrequency.toDouble()),
-                      _buildChoiceQuestion('誘い主導', '相手と自分、どっちからのアクションが多い？', ['相手', '自分', '半々'], (val) => _initiative = val, _initiative),
-                      _buildChoiceQuestion('具体化', 'デート等の約束は具体化してる？', ['YES', 'NO', '止まる'], (val) => _concreteness = val, _concreteness),
-                      _buildChoiceQuestion('継続', 'やり取りは続いてる？', ['続いてる', '途切れた', '未実施'], (val) => _continuation = val, _continuation),
-                      _buildSliderQuestion('証拠度 (自信)', '自分の解釈の客観的確実性は？ (1:憶測 - 5:確実)', (val) => _evidenceLevel = val.toInt(), _evidenceLevel.toDouble()),
                     ],
                   ),
                 ),
@@ -109,28 +116,37 @@ class _WizardScreenState extends State<WizardScreen> {
   }
 
   Widget _buildTextQuestion(String title, String desc, String hint, Function(String) onChanged, String initVal) {
-    return Padding(
+    return SingleChildScrollView(
       padding: const EdgeInsets.all(24.0),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const SizedBox(height: 40),
-          Text(title, style: const TextStyle(color: Color(0xFFFF007F), fontSize: 24, fontWeight: FontWeight.bold)),
-          const SizedBox(height: 16),
-          Text(desc, style: const TextStyle(fontSize: 20)),
-          const SizedBox(height: 32),
-          TextField(
-            onChanged: onChanged,
-            controller: TextEditingController(text: initVal)..selection = TextSelection.collapsed(offset: initVal.length),
-            decoration: InputDecoration(
-              hintText: hint,
-              filled: true,
-              fillColor: const Color(0xFF1E1E1E),
-              border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+          const SizedBox(height: 20),
+          GlassCard(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(title, style: const TextStyle(color: Color(0xFF00FFFF), fontSize: 24, fontWeight: FontWeight.bold)),
+                const SizedBox(height: 12),
+                Text(desc, style: const TextStyle(fontSize: 18)),
+                const SizedBox(height: 24),
+                TextField(
+                  onChanged: onChanged,
+                  controller: TextEditingController(text: initVal)..selection = TextSelection.collapsed(offset: initVal.length),
+                  style: const TextStyle(color: Colors.white),
+                  decoration: InputDecoration(
+                    hintText: hint,
+                    hintStyle: TextStyle(color: Colors.white.withOpacity(0.5)),
+                    filled: true,
+                    fillColor: Colors.black.withOpacity(0.3),
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+                  ),
+                  maxLines: 3,
+                ),
+              ],
             ),
-            maxLines: 3,
           ),
-          const Spacer(),
+          const SizedBox(height: 40),
           _buildNextBtn(initVal.isNotEmpty),
         ],
       ),
@@ -138,34 +154,42 @@ class _WizardScreenState extends State<WizardScreen> {
   }
 
   Widget _buildChoiceQuestion(String title, String desc, List<String> choices, Function(String) onChanged, String currentVal) {
-    return Padding(
+    return SingleChildScrollView(
       padding: const EdgeInsets.all(24.0),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const SizedBox(height: 40),
-          Text(title, style: const TextStyle(color: Color(0xFFFF007F), fontSize: 24, fontWeight: FontWeight.bold)),
-          const SizedBox(height: 16),
-          Text(desc, style: const TextStyle(fontSize: 20)),
-          const SizedBox(height: 32),
-          Wrap(
-            spacing: 12,
-            runSpacing: 12,
-            children: choices.map((c) {
-              final isSel = c == currentVal;
-              return ChoiceChip(
-                label: Text(c, style: const TextStyle(fontSize: 16)),
-                selected: isSel,
-                selectedColor: const Color(0xFFFF007F),
-                onSelected: (sel) {
-                  if (sel) {
-                    setState(() => onChanged(c));
-                  }
-                },
-              );
-            }).toList(),
+          const SizedBox(height: 20),
+          GlassCard(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(title, style: const TextStyle(color: Color(0xFF00FFFF), fontSize: 24, fontWeight: FontWeight.bold)),
+                const SizedBox(height: 12),
+                Text(desc, style: const TextStyle(fontSize: 18)),
+                const SizedBox(height: 32),
+                Wrap(
+                  spacing: 12,
+                  runSpacing: 12,
+                  children: choices.map((c) {
+                    final isSel = c == currentVal;
+                    return ChoiceChip(
+                      label: Text(c, style: TextStyle(fontSize: 16, color: isSel ? Colors.white : Colors.white70)),
+                      selected: isSel,
+                      selectedColor: const Color(0xFFFF007F),
+                      backgroundColor: Colors.black.withOpacity(0.3),
+                      onSelected: (sel) {
+                        if (sel) {
+                          setState(() => onChanged(c));
+                        }
+                      },
+                    );
+                  }).toList(),
+                ),
+              ],
+            ),
           ),
-          const Spacer(),
+          const SizedBox(height: 40),
           _buildNextBtn(currentVal.isNotEmpty),
         ],
       ),
@@ -173,34 +197,42 @@ class _WizardScreenState extends State<WizardScreen> {
   }
 
   Widget _buildSliderQuestion(String title, String desc, Function(double) onChanged, double currentVal) {
-    return Padding(
+    return SingleChildScrollView(
       padding: const EdgeInsets.all(24.0),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const SizedBox(height: 40),
-          Text(title, style: const TextStyle(color: Color(0xFFFF007F), fontSize: 24, fontWeight: FontWeight.bold)),
-          const SizedBox(height: 16),
-          Text(desc, style: const TextStyle(fontSize: 20)),
-          const SizedBox(height: 64),
-          Slider(
-            value: currentVal,
-            min: 1,
-            max: 5,
-            divisions: 4,
-            label: currentVal.toInt().toString(),
-            activeColor: const Color(0xFFFF007F),
-            onChanged: (val) {
-              setState(() => onChanged(val));
-            },
-          ),
-          Center(
-            child: Text(
-              currentVal.toInt().toString(),
-              style: const TextStyle(fontSize: 48, fontWeight: FontWeight.bold, color: Color(0xFF00FFFF)),
+          const SizedBox(height: 20),
+          GlassCard(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(title, style: const TextStyle(color: Color(0xFF00FFFF), fontSize: 24, fontWeight: FontWeight.bold)),
+                const SizedBox(height: 12),
+                Text(desc, style: const TextStyle(fontSize: 18)),
+                const SizedBox(height: 40),
+                Slider(
+                  value: currentVal,
+                  min: 1,
+                  max: 5,
+                  divisions: 4,
+                  label: currentVal.toInt().toString(),
+                  activeColor: const Color(0xFFFF007F),
+                  inactiveColor: Colors.black.withOpacity(0.3),
+                  onChanged: (val) {
+                    setState(() => onChanged(val));
+                  },
+                ),
+                Center(
+                  child: Text(
+                    currentVal.toInt().toString(),
+                    style: const TextStyle(fontSize: 48, fontWeight: FontWeight.bold, color: Color(0xFFFF007F)),
+                  ),
+                ),
+              ],
             ),
           ),
-          const Spacer(),
+          const SizedBox(height: 40),
           _buildNextBtn(true), // Slider always has a value
         ],
       ),
@@ -212,8 +244,12 @@ class _WizardScreenState extends State<WizardScreen> {
       width: double.infinity,
       height: 56,
       child: ElevatedButton(
+        style: ElevatedButton.styleFrom(
+          backgroundColor: const Color(0xFFFF007F), // Neon pink
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        ),
         onPressed: isReady ? _nextPage : null,
-        child: Text(_currentPage == 10 ? '解析開始' : '次へ', style: const TextStyle(fontSize: 18)),
+        child: Text(_currentPage == 5 ? '解析開始' : '次へ', style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white)),
       ),
     );
   }

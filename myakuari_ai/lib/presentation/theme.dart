@@ -20,7 +20,7 @@ class AppTheme {
         surface: cardBg,
       ),
       textTheme: GoogleFonts.notoSansJpTextTheme(ThemeData.dark().textTheme),
-      cardTheme: CardTheme(
+      cardTheme: CardThemeData(
         color: cardBg,
         elevation: 4,
         shape: RoundedRectangleBorder(

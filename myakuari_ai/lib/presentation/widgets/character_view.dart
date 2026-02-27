@@ -68,27 +68,45 @@ class _CharacterViewState extends ConsumerState<CharacterView> with SingleTicker
     double scale = 1.0;
     double rotation = 0.0;
     double dy = 0.0;
+    String imagePath = 'assets/images/char/char_0.png';
 
     switch (widget.state) {
       case CharacterState.down:
+        imagePath = 'assets/images/char/char_8.png';
+        filter = const ColorFilter.mode(Colors.grey, BlendMode.saturation);
+        break;
       case CharacterState.announceBad:
+        imagePath = 'assets/images/char/char_2.png';
         filter = const ColorFilter.mode(Colors.grey, BlendMode.saturation);
         break;
       case CharacterState.announceGood:
-        // 飛び跳ねるアニメーションなど
+        imagePath = 'assets/images/char/char_9.png';
+        break;
+      case CharacterState.announceNeutral:
+        imagePath = 'assets/images/char/char_1.png';
         break;
       case CharacterState.listening:
+        imagePath = 'assets/images/char/char_3.png';
         scale = 1.05;
         break;
       case CharacterState.question:
+        imagePath = 'assets/images/char/char_4.png';
         rotation = 0.1;
         break;
+      case CharacterState.thinking:
+        imagePath = 'assets/images/char/char_5.png';
+        break;
+      case CharacterState.closing:
+        imagePath = 'assets/images/char/char_11.png';
+        break;
+      case CharacterState.idle:
       default:
+        imagePath = 'assets/images/char/char_0.png';
         break;
     }
 
     Widget image = Image.asset(
-      'assets/images/zundamon_base.png',
+      imagePath,
       fit: BoxFit.contain,
     );
 

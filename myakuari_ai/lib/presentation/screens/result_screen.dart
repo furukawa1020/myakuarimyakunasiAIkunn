@@ -3,6 +3,7 @@ import '../../domain/models/inference_models.dart';
 import '../widgets/character_view.dart';
 import 'home_screen.dart';
 import '../../domain/voicevox_service.dart';
+import '../widgets/glass_card.dart';
 
 class ResultScreen extends StatefulWidget {
   final InferenceResult result;
@@ -59,7 +60,13 @@ class _ResultScreenState extends State<ResultScreen> {
           // 背景
           Positioned.fill(
             child: Container(
-              color: const Color(0xFF121212),
+              decoration: const BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [Color(0xFF1A1A2E), Color(0xFF16213E), Color(0xFF0F3460)],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+              ),
             ),
           ),
           
@@ -136,9 +143,9 @@ class _ResultScreenState extends State<ResultScreen> {
           style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Color(0xFF00FFFF)),
         ),
         const SizedBox(height: 16),
-        ...widget.result.topFactors.map((f) => Card(
+        ...widget.result.topFactors.map((f) => GlassCard(
               margin: const EdgeInsets.only(bottom: 12),
-              color: const Color(0xFF1E1E1E),
+              padding: const EdgeInsets.all(4),
               child: ListTile(
                 leading: Text(
                   '${f.scoreImpact > 0 ? '+' : ''}${f.scoreImpact}',
@@ -148,8 +155,8 @@ class _ResultScreenState extends State<ResultScreen> {
                     color: f.scoreImpact > 0 ? const Color(0xFFFF007F) : Colors.blue,
                   ),
                 ),
-                title: Text(f.title, style: const TextStyle(fontWeight: FontWeight.bold)),
-                subtitle: Text('${f.description}\n[根拠: ${f.reason}]'),
+                title: Text(f.title, style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
+                subtitle: Text('${f.description}\n[根拠: ${f.reason}]', style: TextStyle(color: Colors.white.withOpacity(0.8))),
               ),
             )),
       ],
@@ -165,13 +172,10 @@ class _ResultScreenState extends State<ResultScreen> {
           style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Color(0xFF00FFFF)),
         ),
         const SizedBox(height: 16),
-        ...widget.result.counterfactuals.map((cf) => Container(
+        ...widget.result.counterfactuals.map((cf) => GlassCard(
               margin: const EdgeInsets.only(bottom: 12),
               padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                border: Border.all(color: cf.isImprovement ? const Color(0xFFFF007F) : Colors.blueGrey),
-                borderRadius: BorderRadius.circular(12),
-              ),
+              borderColor: cf.isImprovement ? const Color(0xFFFF007F).withOpacity(0.5) : Colors.blueGrey.withOpacity(0.5),
               child: Row(
                 children: [
                   Icon(cf.isImprovement ? Icons.trending_up : Icons.trending_down,
@@ -181,9 +185,9 @@ class _ResultScreenState extends State<ResultScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(cf.description, style: const TextStyle(fontSize: 16)),
+                        Text(cf.description, style: const TextStyle(fontSize: 16, color: Colors.white)),
                         Text('予想スコア: ${widget.result.loveScore} → ${cf.newScore}',
-                            style: const TextStyle(fontWeight: FontWeight.bold)),
+                            style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.white70)),
                       ],
                     ),
                   ),
@@ -203,14 +207,15 @@ class _ResultScreenState extends State<ResultScreen> {
           style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Color(0xFF00FFFF)),
         ),
         const SizedBox(height: 16),
-        ...widget.result.nextActions.map((action) => Padding(
-              padding: const EdgeInsets.only(bottom: 8.0),
+        ...widget.result.nextActions.map((action) => GlassCard(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              margin: const EdgeInsets.only(bottom: 12),
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const Text('👉', style: TextStyle(fontSize: 20)),
-                  const SizedBox(width: 8),
-                  Expanded(child: Text(action, style: const TextStyle(fontSize: 18))),
+                  const SizedBox(width: 12),
+                  Expanded(child: Text(action, style: const TextStyle(fontSize: 16, color: Colors.white, height: 1.4))),
                 ],
               ),
             )),

@@ -53,23 +53,38 @@ class _LoadingScreenState extends State<LoadingScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const SizedBox(
-              height: 200,
-              child: CharacterView(state: CharacterState.thinking),
+      body: Stack(
+        children: [
+          Positioned.fill(
+            child: Container(
+              decoration: const BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [Color(0xFF1A1A2E), Color(0xFF16213E), Color(0xFF0F3460)],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+              ),
             ),
-            const SizedBox(height: 32),
-            const CircularProgressIndicator(color: Color(0xFFFF007F)),
-            const SizedBox(height: 24),
-            Text(
-              _statusMessage,
-              style: const TextStyle(fontSize: 18, color: Color(0xFF00FFFF)),
+          ),
+          Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const SizedBox(
+                  height: 200,
+                  child: CharacterView(state: CharacterState.thinking),
+                ),
+                const SizedBox(height: 32),
+                const CircularProgressIndicator(color: Color(0xFFFF007F)),
+                const SizedBox(height: 24),
+                Text(
+                  _statusMessage,
+                  style: const TextStyle(fontSize: 18, color: Color(0xFF00FFFF)),
+                ),
+              ],
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }

@@ -43,3 +43,8 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+# Voicevox Large Binary Files
+assets/voicevox/
+windows/runner/voicevox_core*
+windows/runner/open_jtalk*

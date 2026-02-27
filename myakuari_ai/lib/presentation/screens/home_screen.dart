@@ -4,6 +4,8 @@ import 'wizard_screen.dart';
 import 'history_screen.dart';
 import 'settings_screen.dart';
 import 'about_screen.dart';
+import '../widgets/character_view.dart';
+import '../widgets/glass_card.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -18,7 +20,7 @@ class HomeScreen extends StatelessWidget {
             child: Container(
               decoration: const BoxDecoration(
                 gradient: LinearGradient(
-                  colors: [Color(0xFF1E1E1E), Color(0xFF121212)],
+                  colors: [Color(0xFF1A1A2E), Color(0xFF16213E), Color(0xFF0F3460)],
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                 ),
@@ -28,14 +30,10 @@ class HomeScreen extends StatelessWidget {
           
           // Mascot overlay placeholder
           Positioned(
-            right: -40,
+            right: -60,
             bottom: -20,
-            height: MediaQuery.of(context).size.height * 0.7,
-            child: Image.asset(
-              'assets/images/zundamon_base.png',
-              fit: BoxFit.contain,
-              errorBuilder: (_, __, ___) => const SizedBox(),
-            ),
+            height: MediaQuery.of(context).size.height * 0.55,
+            child: const CharacterView(state: CharacterState.idle),
           ),
 
           // Content
@@ -67,16 +65,13 @@ class HomeScreen extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 16),
-                  Container(
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: Colors.black54,
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: const Color(0xFF00FFFF).withOpacity(0.5)),
-                    ),
+                  GlassCard(
+                    padding: const EdgeInsets.all(20),
+                    margin: EdgeInsets.zero,
+                    borderColor: const Color(0xFF00FFFF).withOpacity(0.3),
                     child: const Text(
                       '「5W1Hから特徴量を抽出し、端末内で確率推論・反事実解析・推論グラフ生成まで実行して、脈アリ度・根拠・次の一手をExplainableに返す、完全ローカル恋愛推論AIです。」',
-                      style: TextStyle(fontSize: 14, color: Colors.white, height: 1.5),
+                      style: TextStyle(fontSize: 15, color: Colors.white, height: 1.6),
                     ),
                   ),
                   const Spacer(),
