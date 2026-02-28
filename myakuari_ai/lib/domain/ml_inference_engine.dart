@@ -50,6 +50,9 @@ class MLInferenceEngine {
       // ランク判定
       final grade = _calculateGrade(loveScore);
 
+      // スコアのダイナミックレンジ拡大 (ユーザー体験向上のための演出)
+      final dynamicScore = _distortScore(loveScore, label);
+
       // レーダーチャート用データ (0.0 - 1.0)
       final radarData = {
         '魅力': (features[0] / 10.0).clamp(0.1, 1.0),
@@ -65,12 +68,11 @@ class MLInferenceEngine {
       final actions    = _generateActions(label);
       final script     = _generateEnhancedScript(label, loveScore, topFactors, features);
 
-      return InferenceResult(
         label: label,
         labelText: label.text,
-        loveScore: loveScore,
+        loveScore: dynamicScore, // 補正後のスコアを使用
         confidence: confidence,
-        compatibilityGrade: grade,
+        compatibilityGrade: _calculateGrade(dynamicScore),
         radarData: radarData,
         topFactors: topFactors,
         graph: graph,
@@ -89,23 +91,47 @@ class MLInferenceEngine {
     final continueMap   = <String, double>{'続いてる': 8.0, '普通': 6.0, '途切れた': 2.0};
     final contactMap    = [2.0, 4.0, 6.0, 8.0, 10.0];
 
-    final initiative   = initiativeMap[input.initiative] ?? 5.0;
-    final concreteness = concreteMap[input.concreteness] ?? 5.0;
-    final continuation = continueMap[input.continuation] ?? 5.0;
-    final freqVal      = contactMap[(input.contactFrequency - 1).clamp(0, 4)];
+    // 1. 基本値（UIからの入力、なければデフォルト）
+    double initiative   = initiativeMap[input.initiative] ?? 6.0;
+    double concreteness = concreteMap[input.concreteness] ?? 3.0;
+    double continuation = continueMap[input.continuation] ?? 2.0;
+    double freqVal      = contactMap[(input.contactFrequency - 1).clamp(0, 4)];
+
+    // 2. テキストからのキーワード判定による「AI的」な特徴量補正
+    final allText = '${input.who} ${input.what} ${input.why} ${input.how}';
+
+    // 主導権 (Initiative) の補正
+    if (allText.contains('誘われた') || allText.contains('きた') || allText.contains('きてくれた')) {
+      initiative = math.max(initiative, 8.5);
+    } else if (allText.contains('誘った') || allText.contains('こない') || allText.contains('既読無視')) {
+      initiative = math.min(initiative, 4.0);
+    }
+
+    // 具体性 (Concreteness/Prob) の補正
+    if (allText.contains('約束') || allText.contains('予定') || allText.contains('行くことに') || allText.contains('楽しみ')) {
+      concreteness = math.max(concreteness, 8.5);
+    } else if (allText.contains('紹介して') || allText.contains('男友達') || allText.contains('女友達')) {
+      concreteness = math.min(concreteness, 4.0);
+    }
+
+    // 継続性 (Continuation) の補正
+    if (allText.contains('毎日') || allText.contains('続いてる') || allText.contains('ずっと')) {
+      continuation = math.max(continuation, 8.0);
+    }
 
     // Speed Dating特徴空間への変換
-    final attrO  = (initiative + concreteness) / 2.0;         // 魅力度代理
-    final sincO  = continuation;                                // 誠実さ代理
-    const intelO = 6.5;                                         // 知性（固定中間値）
-    final funO   = freqVal;                                     // 楽しさ代理
-    final sharO  = input.where.contains('趣味') ? 8.0
-                 : input.where.contains('職場') ? 5.0 : 6.0;   // 共通趣味代理
+    final attrO  = (initiative + concreteness) / 2.0;         // 魅力度代理 (相手からのアプローチがあれば高い)
+    final sincO  = continuation;                                // 誠実さ代理 (継続していれば高い)
+    const intelO = 7.0;                                         // 知性（固定中間値）
+    final funO   = freqVal;                                     // 楽しさ代理 (頻度で代用)
+    final sharO  = (input.where.contains('趣味') || allText.contains('趣味') || allText.contains('共通')) ? 8.0
+                 : (input.where.contains('職場') || allText.contains('仕事')) ? 5.0 : 6.0;
     final likeO  = (continuation + initiative) / 2.0;          // 好感度代理
-    final probO  = concreteness * 10.0;                         // また会いたい確率
+    final probO  = concreteness;                                // また会いたい確率 (0-10スケールに修正)
     final metO   = (input.who.contains('職場') ||
                     input.who.contains('友達') ||
-                    input.who.contains('同僚')) ? 1.0 : 0.5;   // 以前に会ったか
+                    input.who.contains('同僚') ||
+                    allText.contains('同期')) ? 1.0 : 0.0;
     const impraceO = 4.0;
     const imprelO  = 3.0;
 
@@ -248,5 +274,18 @@ class MLInferenceEngine {
 
     s += '※この診断はコロンビア大学の実データに基づいた、ボクのガチ推論なのだ！';
     return s;
+  }
+
+  /// スコアが中央（30-40付近）に固まりやすいため、演出としてレンジを広げる
+  int _distortScore(int rawScore, Label label) {
+    if (label == Label.like) {
+      // 脈ありなら、最低でも65点、最高100点に近づける
+      return (65 + (rawScore * 0.35)).round().clamp(65, 99);
+    } else if (label == Label.nope) {
+      // 脈なしなら、0-40点の範囲に押し込める
+      return (rawScore * 0.8).round().clamp(5, 39);
+    }
+    // 中立なら40-64点
+    return (40 + (rawScore * 0.24)).round().clamp(40, 64);
   }
 }
