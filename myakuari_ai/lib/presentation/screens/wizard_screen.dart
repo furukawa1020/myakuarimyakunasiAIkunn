@@ -170,6 +170,14 @@ class _WizardScreenState extends State<WizardScreen> {
   }
 
   Widget _buildTextQuestion(String title, String desc, String hint, TextEditingController controller) {
+    // 質問ごとのサンプルテキスト
+    final Map<String, String> samples = {
+      'Who': '職場の同僚。よくランチに行く仲。',
+      'What': '突然向こうから週末の映画に誘われた！',
+      'Why': '普段は誘わないタイプだから、驚いたし期待しちゃう。',
+      'How': '雑談の中で好きな映画の話になったら、自然に誘われた。',
+    };
+
     return SingleChildScrollView(
       padding: const EdgeInsets.all(24.0),
       child: Column(
@@ -180,7 +188,22 @@ class _WizardScreenState extends State<WizardScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(title, style: const TextStyle(color: Color(0xFF00FFFF), fontSize: 24, fontWeight: FontWeight.bold)),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(title, style: const TextStyle(color: Color(0xFF00FFFF), fontSize: 24, fontWeight: FontWeight.bold)),
+                    if (samples.containsKey(title))
+                      TextButton.icon(
+                        onPressed: () {
+                          setState(() {
+                            controller.text = samples[title]!;
+                          });
+                        },
+                        icon: const Icon(Icons.auto_awesome, size: 16, color: Color(0xFFFF007F)),
+                        label: const Text('サンプル', style: TextStyle(color: Color(0xFFFF007F), fontSize: 12)),
+                      ),
+                  ],
+                ),
                 const SizedBox(height: 12),
                 Text(desc, style: const TextStyle(fontSize: 18, color: Colors.white)),
                 const SizedBox(height: 24),
