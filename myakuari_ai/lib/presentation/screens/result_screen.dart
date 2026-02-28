@@ -67,9 +67,13 @@ class _ResultScreenState extends State<ResultScreen> {
           // 背景
           Positioned.fill(
             child: Container(
-              decoration: const BoxDecoration(
+              decoration: BoxDecoration(
                 gradient: LinearGradient(
-                  colors: [Color(0xFF0A0015), Color(0xFF16213E), Color(0xFF000E1A)],
+                  colors: widget.result.loveScore >= 70
+                      ? [const Color(0xFF2D002D), const Color(0xFF160026), const Color(0xFF0A0015)]
+                      : widget.result.loveScore >= 40
+                          ? [const Color(0xFF00152D), const Color(0xFF000E1A), const Color(0xFF0A0015)]
+                          : [const Color(0xFF151515), const Color(0xFF0A0A0A), Colors.black],
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
                 ),
@@ -149,7 +153,7 @@ class _ResultScreenState extends State<ResultScreen> {
       case 'B': color = const Color(0xFF00FFFF); break;
       case 'C': color = const Color(0xFF00FF00); break;
       case 'D': color = const Color(0xFFFF4500); break;
-      default:  color = Colors.amber;
+      default:  color = const Color(0xFFFFD700);
     }
 
     return Container(

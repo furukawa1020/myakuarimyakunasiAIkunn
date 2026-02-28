@@ -39,11 +39,11 @@ class GlassCard extends StatelessWidget {
           child: Container(
             padding: padding,
             decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.05),
+              color: Colors.white.withOpacity(0.08), // Slightly more opaque
               gradient: LinearGradient(
                 colors: [
-                  Colors.white.withOpacity(0.1),
-                  Colors.white.withOpacity(0.02),
+                  Colors.white.withOpacity(0.12),
+                  Colors.white.withOpacity(0.04),
                 ],
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,

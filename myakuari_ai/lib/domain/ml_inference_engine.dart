@@ -101,38 +101,48 @@ class MLInferenceEngine {
     // 2. テキストからのキーワード判定による「AI的」な特徴量補正
     final allText = '${input.who} ${input.what} ${input.why} ${input.how}';
 
-    // 主導権 (Initiative) の補正
-    if (allText.contains('誘われた') || allText.contains('きた') || allText.contains('きてくれた')) {
-      initiative = math.max(initiative, 8.5);
-    } else if (allText.contains('誘った') || allText.contains('こない') || allText.contains('既読無視')) {
-      initiative = math.min(initiative, 4.0);
+    // 主導権 (Initiative) の補正: 相手からのアクション
+    final positiveInitiative = ['誘われた', 'きた', 'きてくれた', 'LINEがくる', '返信早い', '誘い', 'アプローチ'];
+    final negativeInitiative = ['誘った', '既読無視', '未読無視', '返信こない', '自分から', 'そっけない'];
+    
+    for (var k in positiveInitiative) {
+      if (allText.contains(k)) initiative = math.max(initiative, 8.5);
+    }
+    for (var k in negativeInitiative) {
+      if (allText.contains(k)) initiative = math.min(initiative, 3.5);
     }
 
-    // 具体性 (Concreteness/Prob) の補正
-    if (allText.contains('約束') || allText.contains('予定') || allText.contains('行くことに') || allText.contains('楽しみ')) {
-      concreteness = math.max(concreteness, 8.5);
-    } else if (allText.contains('紹介して') || allText.contains('男友達') || allText.contains('女友達')) {
-      concreteness = math.min(concreteness, 4.0);
+    // 具体性 (Concreteness/Prob) の補正: 未来の予定や親密度
+    final positiveConcrete = ['約束', '予定', '行くことに', '楽しみ', 'デート', '二人で', '遊びに', '映画', '食事', 'ランチ', '飲み'];
+    final negativeConcrete = ['紹介', '友達', '相談', 'みんなで', 'グループ', '仕事だけ', '事務的'];
+
+    for (var k in positiveConcrete) {
+      if (allText.contains(k)) concreteness = math.max(concreteness, 8.5);
+    }
+    for (var k in negativeConcrete) {
+      if (allText.contains(k)) concreteness = math.min(concreteness, 3.5);
     }
 
-    // 継続性 (Continuation) の補正
-    if (allText.contains('毎日') || allText.contains('続いてる') || allText.contains('ずっと')) {
-      continuation = math.max(continuation, 8.0);
+    // 継続性 (Continuation) の補正: 関係の安定性
+    final positiveContinue = ['毎日', 'ずっと', '続いてる', '頻繁', 'よく', 'いつも'];
+    for (var k in positiveContinue) {
+      if (allText.contains(k)) continuation = math.max(continuation, 8.5);
     }
 
     // Speed Dating特徴空間への変換
-    final attrO  = (initiative + concreteness) / 2.0;         // 魅力度代理 (相手からのアプローチがあれば高い)
-    final sincO  = continuation;                                // 誠実さ代理 (継続していれば高い)
-    const intelO = 7.0;                                         // 知性（固定中間値）
-    final funO   = freqVal;                                     // 楽しさ代理 (頻度で代用)
-    final sharO  = (input.where.contains('趣味') || allText.contains('趣味') || allText.contains('共通')) ? 8.0
-                 : (input.where.contains('職場') || allText.contains('仕事')) ? 5.0 : 6.0;
+    final attrO  = (initiative + concreteness) / 2.0;         // 魅力度代理
+    final sincO  = continuation;                                // 誠実さ代理
+    const intelO = 7.5;                                         // 知性（固定中間値、少し高めに）
+    final funO   = freqVal;                                     // 楽しさ代理
+    final sharO  = (input.where.contains('趣味') || allText.contains('趣味') || allText.contains('共通') || allText.contains('同じ')) ? 8.5
+                 : (input.where.contains('職場') || allText.contains('仕事') || allText.contains('業務')) ? 5.5 : 6.5;
     final likeO  = (continuation + initiative) / 2.0;          // 好感度代理
-    final probO  = concreteness;                                // また会いたい確率 (0-10スケールに修正)
+    final probO  = concreteness;                                // また会いたい確率 (0-10スケール)
     final metO   = (input.who.contains('職場') ||
                     input.who.contains('友達') ||
                     input.who.contains('同僚') ||
-                    allText.contains('同期')) ? 1.0 : 0.0;
+                    allText.contains('同期') ||
+                    allText.contains('既知')) ? 1.0 : 0.0;
     const impraceO = 4.0;
     const imprelO  = 3.0;
 
