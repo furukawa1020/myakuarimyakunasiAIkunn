@@ -40,10 +40,52 @@ class _WizardScreenState extends State<WizardScreen> {
   String _continuation = '';
   int _evidenceLevel = 3;
 
+  // Controllers
+  final TextEditingController _whoController = TextEditingController();
+  final TextEditingController _whatController = TextEditingController();
+  final TextEditingController _whyController = TextEditingController();
+  final TextEditingController _howController = TextEditingController();
+
   @override
   void initState() {
     super.initState();
     _initTts();
+  }
+
+  @override
+  void dispose() {
+    _whoController.dispose();
+    _whatController.dispose();
+    _whyController.dispose();
+    _howController.dispose();
+    _tts?.dispose();
+    super.dispose();
+  }
+
+  void _nextPage() {
+    if (_currentPage < 5) {
+      _pageController.nextPage(duration: const Duration(milliseconds: 300), curve: Curves.easeInOut);
+    } else {
+      // Done, submit
+      final input = InferenceInput(
+        who: _whoController.text.isEmpty ? '不明' : _whoController.text,
+        what: _whatController.text.isEmpty ? '不明' : _whatController.text,
+        when: _when.isEmpty ? '不明' : _when,
+        where: _where.isEmpty ? '不明' : _where,
+        why: _whyController.text.isEmpty ? '不明' : _whyController.text,
+        how: _howController.text.isEmpty ? '不明' : _howController.text,
+        contactFrequency: _contactFrequency,
+        initiative: _initiative.isEmpty ? '半々' : _initiative,
+        concreteness: _concreteness.isEmpty ? '止まる' : _concreteness,
+        continuation: _continuation.isEmpty ? '途切れた' : _continuation,
+        evidenceLevel: _evidenceLevel,
+      );
+
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => LoadingScreen(input: input)),
+      );
+    }
   }
 
   Future<void> _initTts() async {
@@ -61,44 +103,14 @@ class _WizardScreenState extends State<WizardScreen> {
   }
 
   @override
-  void dispose() {
-    _tts?.dispose();
-    super.dispose();
-  }
-
-  void _nextPage() {
-    if (_currentPage < 5) {
-      _pageController.nextPage(duration: const Duration(milliseconds: 300), curve: Curves.easeInOut);
-    } else {
-      // Done, submit
-      final input = InferenceInput(
-        who: _who.isEmpty ? '不明' : _who,
-        what: _what.isEmpty ? '不明' : _what,
-        when: _when.isEmpty ? '不明' : _when,
-        where: _where.isEmpty ? '不明' : _where,
-        why: _why.isEmpty ? '不明' : _why,
-        how: _how.isEmpty ? '不明' : _how,
-        contactFrequency: _contactFrequency,
-        initiative: _initiative.isEmpty ? '半々' : _initiative,
-        concreteness: _concreteness.isEmpty ? '止まる' : _concreteness,
-        continuation: _continuation.isEmpty ? '途切れた' : _continuation,
-        evidenceLevel: _evidenceLevel,
-      );
-
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (_) => LoadingScreen(input: input)),
-      );
-    }
-  }
-
-  @override
   Widget build(BuildContext context) {
     return Scaffold(
+      extendBodyBehindAppBar: true,
       appBar: AppBar(
-        title: Text('質問 ${_currentPage + 1} / 6'),
+        title: Text('質問 ${_currentPage + 1} / 6', style: const TextStyle(fontWeight: FontWeight.bold)),
         backgroundColor: Colors.transparent,
         elevation: 0,
+        centerTitle: true,
       ),
       body: Stack(
         children: [
@@ -107,9 +119,9 @@ class _WizardScreenState extends State<WizardScreen> {
             child: Container(
               decoration: const BoxDecoration(
                 gradient: LinearGradient(
-                  colors: [Color(0xFF1A1A2E), Color(0xFF16213E), Color(0xFF0F3460)],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
+                  colors: [Color(0xFF0A0015), Color(0xFF16213E), Color(0xFF000E1A)],
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
                 ),
               ),
             ),
@@ -118,7 +130,7 @@ class _WizardScreenState extends State<WizardScreen> {
           Positioned(
             right: -60,
             bottom: -20,
-            height: MediaQuery.of(context).size.height * 0.5,
+            height: MediaQuery.of(context).size.height * 0.45,
             child: const CharacterView(state: CharacterState.listening),
           ),
           
@@ -127,8 +139,9 @@ class _WizardScreenState extends State<WizardScreen> {
               children: [
                 LinearProgressIndicator(
                   value: (_currentPage + 1) / 6,
-                  backgroundColor: Colors.grey[800],
+                  backgroundColor: Colors.grey[900],
                   valueColor: const AlwaysStoppedAnimation<Color>(Color(0xFF00FFFF)),
+                  minHeight: 2,
                 ),
                 Expanded(
                   child: PageView(
@@ -139,12 +152,12 @@ class _WizardScreenState extends State<WizardScreen> {
                     _speak(idx);
                   },
                     children: [
-                      _buildTextQuestion('Who', '相手は誰？関係性は？', '例: 職場の同僚でよく話す仲', (val) => _who = val, _who),
-                      _buildTextQuestion('What', '何があったの？', '例: ランチに誘われた', (val) => _what = val, _what),
+                      _buildTextQuestion('Who', '相手は誰？関係性は？', '例: 職場の同僚でよく話す仲', _whoController),
+                      _buildTextQuestion('What', '何があったの？', '例: ランチに誘われた', _whatController),
                       _buildChoiceQuestion('When', 'いつの事？', ['今日', '昨日', '今週', '先週', 'それ以前'], (val) => _when = val, _when),
                       _buildChoiceQuestion('Where', 'どんな文脈？', ['対面', 'LINE', '通話', '飲み', '職場/学校', 'その他'], (val) => _where = val, _where),
-                      _buildTextQuestion('Why', 'どうしてそう思った？（自分の解釈）', '例: 普段誘ってこないのに珍しい', (val) => _why = val, _why),
-                      _buildTextQuestion('How', 'どんな流れだった？', '例: 趣味の話から自然な流れで', (val) => _how = val, _how),
+                      _buildTextQuestion('Why', 'どうしてそう思った？（自分の解釈）', '例: 普段誘ってこないのに珍しい', _whyController),
+                      _buildTextQuestion('How', 'どんな流れだった？', '例: 趣味の話から自然な流れで', _howController),
                     ],
                   ),
                 ),
@@ -156,7 +169,7 @@ class _WizardScreenState extends State<WizardScreen> {
     );
   }
 
-  Widget _buildTextQuestion(String title, String desc, String hint, Function(String) onChanged, String initVal) {
+  Widget _buildTextQuestion(String title, String desc, String hint, TextEditingController controller) {
     return SingleChildScrollView(
       padding: const EdgeInsets.all(24.0),
       child: Column(
@@ -169,15 +182,17 @@ class _WizardScreenState extends State<WizardScreen> {
               children: [
                 Text(title, style: const TextStyle(color: Color(0xFF00FFFF), fontSize: 24, fontWeight: FontWeight.bold)),
                 const SizedBox(height: 12),
-                Text(desc, style: const TextStyle(fontSize: 18)),
+                Text(desc, style: const TextStyle(fontSize: 18, color: Colors.white)),
                 const SizedBox(height: 24),
                 TextField(
-                  onChanged: onChanged,
-                  controller: TextEditingController(text: initVal)..selection = TextSelection.collapsed(offset: initVal.length),
+                  controller: controller,
+                  onChanged: (val) {
+                    setState(() {}); // Rebuild for button state
+                  },
                   style: const TextStyle(color: Colors.white),
                   decoration: InputDecoration(
                     hintText: hint,
-                    hintStyle: TextStyle(color: Colors.white.withOpacity(0.5)),
+                    hintStyle: TextStyle(color: Colors.white.withOpacity(0.4)),
                     filled: true,
                     fillColor: Colors.black.withOpacity(0.3),
                     border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
@@ -188,7 +203,7 @@ class _WizardScreenState extends State<WizardScreen> {
             ),
           ),
           const SizedBox(height: 40),
-          _buildNextBtn(initVal.isNotEmpty),
+          _buildNextBtn(controller.text.isNotEmpty),
         ],
       ),
     );
