@@ -68,6 +68,7 @@ class MLInferenceEngine {
       final actions    = _generateActions(label);
       final script     = _generateEnhancedScript(label, loveScore, topFactors, features);
 
+      return InferenceResult(
         label: label,
         labelText: label.text,
         loveScore: dynamicScore, // 補正後のスコアを使用
