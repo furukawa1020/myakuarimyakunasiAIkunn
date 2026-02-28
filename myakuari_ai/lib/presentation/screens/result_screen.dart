@@ -109,6 +109,7 @@ class _ResultScreenState extends State<ResultScreen> {
   }
 
   Widget _buildHeaderSection() {
+    final scoreColor = widget.result.loveScore >= 50 ? const Color(0xFFFF007F) : const Color(0xFF00FFFF);
     return GlassCard(
       padding: const EdgeInsets.all(20),
       child: Row(
@@ -119,12 +120,17 @@ class _ResultScreenState extends State<ResultScreen> {
             children: [
               Text(
                 '総合判定: ${widget.result.labelText}',
-                style: const TextStyle(fontSize: 18, color: Colors.white70),
+                style: const TextStyle(fontSize: 18, color: Colors.white70, fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 8),
-              Text(
-                'Love Score: ${widget.result.loveScore}',
-                style: const TextStyle(fontSize: 32, fontWeight: FontWeight.w900, color: Colors.white),
+              ShaderMask(
+                shaderCallback: (bounds) => LinearGradient(
+                  colors: [scoreColor, scoreColor.withOpacity(0.6)],
+                ).createShader(bounds),
+                child: Text(
+                  'Love Score: ${widget.result.loveScore}',
+                  style: const TextStyle(fontSize: 34, fontWeight: FontWeight.w900, color: Colors.white),
+                ),
               ),
             ],
           ),
@@ -142,23 +148,24 @@ class _ResultScreenState extends State<ResultScreen> {
       case 'A': color = const Color(0xFFFF007F); break;
       case 'B': color = const Color(0xFF00FFFF); break;
       case 'C': color = const Color(0xFF00FF00); break;
-      default:  color = Colors.grey;
+      case 'D': color = const Color(0xFFFF4500); break;
+      default:  color = Colors.amber;
     }
 
     return Container(
-      width: 70,
-      height: 70,
+      width: 80,
+      height: 80,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
-        border: Border.all(color: color, width: 3),
+        border: Border.all(color: color, width: 4),
         boxShadow: [
-          BoxShadow(color: color.withOpacity(0.5), blurRadius: 15, spreadRadius: 2),
+          BoxShadow(color: color.withOpacity(0.8), blurRadius: 20, spreadRadius: 3),
         ],
       ),
       alignment: Alignment.center,
       child: Text(
         grade,
-        style: TextStyle(fontSize: 40, fontWeight: FontWeight.w900, color: color),
+        style: TextStyle(fontSize: 44, fontWeight: FontWeight.w900, color: color),
       ),
     );
   }
