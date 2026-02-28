@@ -170,12 +170,28 @@ class _WizardScreenState extends State<WizardScreen> {
   }
 
   Widget _buildTextQuestion(String title, String desc, String hint, TextEditingController controller) {
-    // 質問ごとのサンプルテキスト
-    final Map<String, String> samples = {
-      'Who': '職場の同僚。よくランチに行く仲。',
-      'What': '突然向こうから週末の映画に誘われた！',
-      'Why': '普段は誘わないタイプだから、驚いたし期待しちゃう。',
-      'How': '雑談の中で好きな映画の話になったら、自然に誘われた。',
+    // 系統別のサンプルテキスト
+    final Map<String, Map<String, String>> sampleSets = {
+      'Who': {
+        '脈あり': '職場の気になる同僚。最近毎日LINEしてる。',
+        '脈なし': '三年前から知ってるただの男友達。',
+        '絶妙': '大学の同期。最近よく目が合う気がする。',
+      },
+      'What': {
+        '脈あり': '向こうから「二人で飲みに行かない？」って誘われた！',
+        '脈なし': '「誰かいい人紹介してよ」と相談された。',
+        '絶妙': '貸してた本を返すついでに、短時間のカフェに誘われた。',
+      },
+      'Why': {
+        '脈あり': '目を見て話してくれるし、会話を広げようとしてくれる。',
+        '脈なし': '完全に「良い友人」として信頼されている感じがする。',
+        '絶妙': '態度は優しいけど、他の人にも同じように接している。',
+      },
+      'How': {
+        '脈あり': '帰り道に二人きりになった時、少し照れながら。',
+        '脈なし': '皆で飲んでる時に、あけすけに言われた。',
+        '絶妙': 'LINEのやり取りの流れで、自然に決まった。',
+      },
     };
 
     return SingleChildScrollView(
@@ -183,27 +199,33 @@ class _WizardScreenState extends State<WizardScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const SizedBox(height: 20),
+          const SizedBox(height: 10),
+          if (sampleSets.containsKey(title))
+            Padding(
+              padding: const EdgeInsets.only(bottom: 12),
+              child: Wrap(
+                spacing: 8,
+                children: sampleSets[title]!.entries.map((e) {
+                  return ActionChip(
+                    avatar: const Icon(Icons.auto_awesome, size: 14, color: Colors.white),
+                    label: Text(e.key, style: const TextStyle(fontSize: 11, color: Colors.white)),
+                    backgroundColor: e.key == '脈あり' ? const Color(0xFFFF007F).withOpacity(0.6) :
+                                   e.key == '脈なし' ? Colors.blueGrey.withOpacity(0.6) :
+                                   const Color(0xFF00FFFF).withOpacity(0.4),
+                    onPressed: () {
+                      setState(() {
+                        controller.text = e.value;
+                      });
+                    },
+                  );
+                }).toList(),
+              ),
+            ),
           GlassCard(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(title, style: const TextStyle(color: Color(0xFF00FFFF), fontSize: 24, fontWeight: FontWeight.bold)),
-                    if (samples.containsKey(title))
-                      TextButton.icon(
-                        onPressed: () {
-                          setState(() {
-                            controller.text = samples[title]!;
-                          });
-                        },
-                        icon: const Icon(Icons.auto_awesome, size: 16, color: Color(0xFFFF007F)),
-                        label: const Text('サンプル', style: TextStyle(color: Color(0xFFFF007F), fontSize: 12)),
-                      ),
-                  ],
-                ),
+                Text(title, style: const TextStyle(color: Color(0xFF00FFFF), fontSize: 24, fontWeight: FontWeight.bold)),
                 const SizedBox(height: 12),
                 Text(desc, style: const TextStyle(fontSize: 18, color: Colors.white)),
                 const SizedBox(height: 24),
