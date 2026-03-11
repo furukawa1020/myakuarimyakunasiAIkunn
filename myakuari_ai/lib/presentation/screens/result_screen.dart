@@ -113,9 +113,16 @@ class _ResultScreenState extends State<ResultScreen> {
   }
 
   Widget _buildHeaderSection() {
-    final scoreColor = widget.result.loveScore >= 50 ? const Color(0xFFFF007F) : const Color(0xFF00FFFF);
+    final scoreColor = widget.result.loveScore >= 70
+        ? const Color(0xFFFF007F)
+        : widget.result.loveScore >= 40
+            ? const Color(0xFF00FFFF)
+            : const Color(0xFFFF4500);
+
     return GlassCard(
       padding: const EdgeInsets.all(20),
+      backgroundColor: scoreColor.withOpacity(0.05),
+      borderColor: scoreColor.withOpacity(0.3),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
@@ -124,7 +131,7 @@ class _ResultScreenState extends State<ResultScreen> {
             children: [
               Text(
                 '総合判定: ${widget.result.labelText}',
-                style: const TextStyle(fontSize: 18, color: Colors.white70, fontWeight: FontWeight.bold),
+                style: TextStyle(fontSize: 18, color: scoreColor.withOpacity(0.9), fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 8),
               ShaderMask(
