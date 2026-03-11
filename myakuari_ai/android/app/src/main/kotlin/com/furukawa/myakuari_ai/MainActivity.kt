@@ -1,4 +1,4 @@
-package com.example.myakuari_ai
+package com.furukawa.myakuari_ai
 
 import io.flutter.embedding.android.FlutterActivity
 
