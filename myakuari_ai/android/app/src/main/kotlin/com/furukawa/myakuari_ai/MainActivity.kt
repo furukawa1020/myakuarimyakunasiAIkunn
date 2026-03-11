@@ -1,4 +1,4 @@
-package com.furukawa.ai_diagnosis_kun
+package com.furukawa.myakuari_ai
 
 import io.flutter.embedding.android.FlutterActivity
 
