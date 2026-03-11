@@ -285,11 +285,10 @@ class _NeonStartButtonState extends State<_NeonStartButton> with SingleTickerPro
                   blurRadius: 15 * _pulse.value,
                   spreadRadius: 1,
                 ),
-                // 内側の淡い光
+                // 内側の淡い光（内側に光っているように見せるため少し塗りを入れる）
                 BoxShadow(
-                  color: const Color(0xFF00FFFF).withOpacity(0.1),
-                  blurRadius: 5,
-                  inset: true,
+                  color: const Color(0xFF00FFFF).withOpacity(0.05),
+                  blurRadius: 2,
                 ),
               ],
             ),
