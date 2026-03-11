@@ -230,6 +230,8 @@ class _ResultScreenState extends State<ResultScreen> {
         ...widget.result.topFactors.take(3).map((f) => GlassCard(
               margin: const EdgeInsets.only(bottom: 12),
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              backgroundColor: (f.scoreImpact > 0 ? const Color(0xFFFF007F) : Colors.blue).withOpacity(0.04),
+              borderColor: (f.scoreImpact > 0 ? const Color(0xFFFF007F) : Colors.blue).withOpacity(0.2),
               child: Row(
                 children: [
                   SizedBox(
@@ -272,6 +274,8 @@ class _ResultScreenState extends State<ResultScreen> {
         ...widget.result.nextActions.map((action) => GlassCard(
               padding: const EdgeInsets.all(16),
               margin: const EdgeInsets.only(bottom: 12),
+              backgroundColor: const Color(0xFF00FFFF).withOpacity(0.03),
+              borderColor: const Color(0xFF00FFFF).withOpacity(0.15),
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
