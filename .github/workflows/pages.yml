@@ -25,6 +25,12 @@ jobs:
       - name: Setup Pages
         uses: actions/configure-pages@v5
 
+      - name: Prepare privacy page from source file
+        run: |
+          mkdir -p privacy
+          printf -- '---\nlayout: default\ntitle: プライバシーポリシー\n---\n\n' \
+            | cat - myakuari_ai/PRIVACY_POLICY.md > privacy/index.md
+
       - name: Build with Jekyll
         uses: actions/jekyll-build-pages@v1
         with:
