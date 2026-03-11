@@ -14,7 +14,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: '教えてAI',
+      title: '脈アリ？脈ナシ？教えて！？AI君！',
       theme: AppTheme.darkTheme,
       localizationsDelegates: const [
         GlobalMaterialLocalizations.delegate,
