@@ -186,48 +186,11 @@ class HomeScreen extends StatelessWidget {
                   padding: const EdgeInsets.symmetric(horizontal: 16),
                   child: Column(
                     children: [
-                      // スタートボタン
-                      SizedBox(
-                        width: double.infinity,
-                        height: 64,
-                        child: DecoratedBox(
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(32),
-                            gradient: const LinearGradient(
-                              colors: [Color(0xFFFF0066), Color(0xFFFF6B00)],
-                            ),
-                            boxShadow: [
-                              BoxShadow(
-                                color: const Color(0xFFFF0066).withOpacity(0.6),
-                                blurRadius: 20,
-                                spreadRadius: 2,
-                                offset: const Offset(0, 4),
-                              ),
-                            ],
-                          ),
-                          child: ElevatedButton(
-                            onPressed: () => Navigator.push(
-                              context,
-                              MaterialPageRoute(builder: (_) => const WizardScreen()),
-                            ),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.transparent,
-                              shadowColor: Colors.transparent,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(32),
-                              ),
-                            ),
-                            child: const Text(
-                              '🔥  推論スタート  🔥',
-                              style: TextStyle(
-                                fontSize: 22,
-                                fontWeight: FontWeight.w900,
-                                color: Colors.white,
-                                letterSpacing: 2,
-                                shadows: [Shadow(color: Colors.black38, blurRadius: 4)],
-                              ),
-                            ),
-                          ),
+                      // ── 新・推論スタートボタン（プレミアム・ネオンデザイン） ──
+                      _NeonStartButton(
+                        onPressed: () => Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (_) => const WizardScreen()),
                         ),
                       ),
                       const SizedBox(height: 12),
@@ -261,6 +224,100 @@ class HomeScreen extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+/// ── 新・推論スタートボタン ──
+/// 安っぽいグラデーションを廃止し、洗練されたネオン境界とグローを採用
+class _NeonStartButton extends StatefulWidget {
+  final VoidCallback onPressed;
+  const _NeonStartButton({required this.onPressed});
+
+  @override
+  State<_NeonStartButton> createState() => _NeonStartButtonState();
+}
+
+class _NeonStartButtonState extends State<_NeonStartButton> with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _pulse;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 2),
+    )..repeat(reverse: true);
+    _pulse = Tween<double>(begin: 1.0, end: 1.1).animate(
+      CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
+    );
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: widget.onPressed,
+      child: AnimatedBuilder(
+        animation: _pulse,
+        builder: (context, child) {
+          return Container(
+            width: double.infinity,
+            height: 64,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(16),
+              color: const Color(0xFF161B33), // 深みのあるネイビー背景
+              border: Border.all(
+                color: const Color(0xFF00FFFF).withOpacity(0.8), // 鮮烈なシアン
+                width: 2,
+              ),
+              boxShadow: [
+                // 外側のネオングロー
+                BoxShadow(
+                  color: const Color(0xFF00FFFF).withOpacity(0.3 * _pulse.value),
+                  blurRadius: 15 * _pulse.value,
+                  spreadRadius: 1,
+                ),
+                // 内側の淡い光
+                BoxShadow(
+                  color: const Color(0xFF00FFFF).withOpacity(0.1),
+                  blurRadius: 5,
+                  inset: true,
+                ),
+              ],
+            ),
+            alignment: Alignment.center,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Icon(Icons.analytics_outlined, color: Color(0xFF00FFFF), size: 24),
+                const SizedBox(width: 12),
+                Text(
+                  '推論を開始する',
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.white,
+                    letterSpacing: 4,
+                    shadows: [
+                      Shadow(
+                        color: const Color(0xFF00FFFF).withOpacity(0.5),
+                        blurRadius: 8,
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          );
+        },
       ),
     );
   }
