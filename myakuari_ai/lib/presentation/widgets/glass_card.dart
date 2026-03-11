@@ -7,6 +7,7 @@ class GlassCard extends StatelessWidget {
   final EdgeInsetsGeometry margin;
   final double borderRadius;
   final Color? borderColor;
+  final Color? backgroundColor;
 
   const GlassCard({
     super.key,
@@ -15,6 +16,7 @@ class GlassCard extends StatelessWidget {
     this.margin = const EdgeInsets.only(bottom: 12.0),
     this.borderRadius = 16.0,
     this.borderColor,
+    this.backgroundColor,
   });
 
   @override
@@ -39,11 +41,11 @@ class GlassCard extends StatelessWidget {
           child: Container(
             padding: padding,
             decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.08), // Slightly more opaque
+              color: backgroundColor ?? Colors.white.withOpacity(0.08),
               gradient: LinearGradient(
                 colors: [
-                  Colors.white.withOpacity(0.12),
-                  Colors.white.withOpacity(0.04),
+                  (backgroundColor ?? Colors.white).withOpacity(0.12),
+                  (backgroundColor ?? Colors.white).withOpacity(0.04),
                 ],
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
