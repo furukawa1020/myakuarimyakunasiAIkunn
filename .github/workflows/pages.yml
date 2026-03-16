@@ -22,6 +22,19 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+
+      - name: Flutter pub get
+        working-directory: myakuari_ai
+        run: flutter pub get
+
+      - name: Build Flutter web
+        working-directory: myakuari_ai
+        run: flutter build web --release --base-href /myakuarimyakunasiAIkunn/
+
       - name: Setup Pages
         uses: actions/configure-pages@v5
 
@@ -36,6 +49,9 @@ jobs:
         with:
           source: ./
           destination: ./_site
+
+      - name: Copy Flutter web build into site
+        run: cp -r myakuari_ai/build/web/. _site/
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3

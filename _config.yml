@@ -1,3 +1,6 @@
 title: 教えてAI
 description: 脈アリ・脈ナシ AI 診断アプリ
 theme: minima
+exclude:
+  - myakuari_ai/
+  - caracter.png

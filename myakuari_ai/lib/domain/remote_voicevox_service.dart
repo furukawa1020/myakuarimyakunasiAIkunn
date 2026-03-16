@@ -1,7 +1,5 @@
-import 'dart:io';
 import 'package:http/http.dart' as http;
 import 'package:audioplayers/audioplayers.dart';
-import 'package:path_provider/path_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 /// Voicevox Engine (HTTP) を使ったリモートTTSサービス。
@@ -72,13 +70,9 @@ class RemoteVoicevoxService {
 
       if (synthRes.statusCode != 200) return;
 
-      // Step 3: WAVデータを一時ファイルに書いて再生
-      final tmpDir = await getTemporaryDirectory();
-      final wavFile = File('${tmpDir.path}/tts_remote.wav');
-      await wavFile.writeAsBytes(synthRes.bodyBytes);
-
+      // Step 3: WAVデータをメモリから直接再生
       await _audioPlayer.stop();
-      await _audioPlayer.play(DeviceFileSource(wavFile.path));
+      await _audioPlayer.play(BytesSource(synthRes.bodyBytes));
     } catch (e) {
       // 接続失敗やタイムアウトは静かに無視
     }
