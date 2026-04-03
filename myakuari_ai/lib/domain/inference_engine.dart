@@ -78,21 +78,17 @@ class InferenceEngine {
     // 9. 音声スクリプト (SpokenScript)
     String script = _generateSpokenScript(label, finalScore, topFactors.isNotEmpty ? topFactors.first : null, nextActions.first);
 
-    return InferenceResult(
-      input: input,
-      label: label,
-      labelText: label.text,
-      loveScore: finalScore,
-      confidence: confidence,
-      compatibilityGrade: _ruleBasedGrade(finalScore),
-      radarData: _generateFallbackRadarData(input),
-      topFactors: topFactors,
-      graph: graph,
-      counterfactuals: counterfactuals,
-      nextActions: nextActions,
       spokenScript: script,
       deepAnalysis: null,
+      isIkikoku: _checkIkikoku(input, finalScore),
+      ikikokuWarning: _checkIkikoku(input, finalScore) ? '【警告】これは「イキ告」の恐れがあるのだ！今の距離感で告白するのは自殺行為なのだ。' : null,
     );
+  }
+
+  static bool _checkIkikoku(InferenceInput input, int score) {
+    if (score >= 45) return false;
+    final text = '${input.what} ${input.how}'.toLowerCase();
+    return text.contains('告白') || text.contains('好き') || text.contains('付き合って');
   }
 
   static String _ruleBasedGrade(int score) {

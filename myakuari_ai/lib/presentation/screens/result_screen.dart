@@ -7,6 +7,13 @@ import '../widgets/glass_card.dart';
 
 import '../widgets/radar_chart.dart';
 import '../../domain/gemma_service.dart';
+import '../widgets/share_card_view.dart';
+import 'package:share_plus/share_plus.dart';
+import 'package:path_provider/path_provider.dart';
+import 'dart:io';
+import 'dart:ui' as ui;
+import 'package:flutter/rendering.dart';
+import 'dart:typed_data';
 
 class ResultScreen extends StatefulWidget {
   final InferenceResult result;
@@ -20,6 +27,7 @@ class ResultScreen extends StatefulWidget {
 class _ResultScreenState extends State<ResultScreen> {
   String? _deepAnalysis;
   bool _isGenerating = false;
+  final GlobalKey _shareKey = GlobalKey();
 
   @override
   void initState() {
@@ -56,6 +64,31 @@ class _ResultScreenState extends State<ResultScreen> {
             ? 'result_neutral'
             : 'result_bad';
     await tts.playNamed(key);
+  }
+
+  Future<void> _captureAndShare() async {
+    try {
+      RenderRepaintBoundary boundary =
+          _shareKey.currentContext!.findRenderObject() as RenderRepaintBoundary;
+      ui.Image image = await boundary.toImage(pixelRatio: 3.0);
+      ByteData? byteData =
+          await image.toByteData(format: ui.ImageByteFormat.png);
+      Uint8List pngBytes = byteData!.buffer.asUint8List();
+
+      final tempDir = await getTemporaryDirectory();
+      final file = await File('${tempDir.path}/diagnosis_result.png').create();
+      await file.writeAsBytes(pngBytes);
+
+      await Share.shareXFiles(
+        [XFile(file.path)],
+        text: '【恋愛診断AIくん】ずんだもんが俺の恋路を診断してくれたのだ！\n'
+            'スコア: ${widget.result.loveScore}点\n'
+            '判定: ${widget.result.labelText}\n'
+            '#恋愛診断AIくん #ずんだもん',
+      );
+    } catch (e) {
+      debugPrint('Share Error: $e');
+    }
   }
 
   @override
@@ -124,15 +157,72 @@ class _ResultScreenState extends State<ResultScreen> {
                   const SizedBox(height: 20),
                   _buildMainDiagnosticSection(),
                   const SizedBox(height: 32),
-                  _buildFactorsSection(),
+                  if (widget.result.isIkikoku) _buildIkikokuWarningSection(),
                   const SizedBox(height: 32),
                   _buildActionsSection(),
+                  const SizedBox(height: 32),
+                  _buildShareButton(),
                   const SizedBox(height: 250), // キャラの被り防止
                 ],
               ),
             ),
           ),
+          
+          // SNS共有用の隠しカード (RepaintBoundary)
+          Positioned(
+            left: -1000, // 画面外に配置
+            child: RepaintBoundary(
+              key: _shareKey,
+              child: ShareCardView(result: widget.result),
+            ),
+          ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildIkikokuWarningSection() {
+    return GlassCard(
+      padding: const EdgeInsets.all(20),
+      backgroundColor: Colors.red.withOpacity(0.1),
+      borderColor: Colors.red,
+      child: Column(
+        children: [
+          const Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(Icons.warning_amber_rounded, color: Colors.red, size: 32),
+              SizedBox(width: 12),
+              Text(
+                'イキ告（事故）確定なのだ！',
+                style: TextStyle(color: Colors.red, fontSize: 20, fontWeight: FontWeight.bold),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Text(
+            widget.result.ikikokuWarning ?? '今の距離感で告白するのは自殺行為なのだ。',
+            textAlign: TextAlign.center,
+            style: const TextStyle(color: Colors.white, fontSize: 14, height: 1.5),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildShareButton() {
+    return Center(
+      child: ElevatedButton.icon(
+        onPressed: _captureAndShare,
+        icon: const Icon(Icons.share_rounded),
+        label: const Text('SNSで結果を晒す', style: TextStyle(fontWeight: FontWeight.bold)),
+        style: ElevatedButton.styleFrom(
+          backgroundColor: const Color(0xFF00FFFF).withOpacity(0.2),
+          foregroundColor: const Color(0xFF00FFFF),
+          side: const BorderSide(color: Color(0xFF00FFFF)),
+          padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 20),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
+        ),
       ),
     );
   }
