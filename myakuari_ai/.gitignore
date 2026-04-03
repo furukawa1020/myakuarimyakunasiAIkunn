@@ -48,3 +48,10 @@ app.*.map.json
 assets/voicevox/
 windows/runner/voicevox_core*
 windows/runner/open_jtalk*
+
+# Machine Learning Large Binary Files
+*.pkl
+*.pkl.gz
+*.onnx
+*.bin
+ml_training/big_romance_dataset.pkl
