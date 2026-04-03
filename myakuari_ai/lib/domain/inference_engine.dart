@@ -90,6 +90,7 @@ class InferenceEngine {
       counterfactuals: counterfactuals,
       nextActions: nextActions,
       spokenScript: script,
+      deepAnalysis: null,
     );
   }
 
