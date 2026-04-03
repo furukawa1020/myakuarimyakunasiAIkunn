@@ -64,6 +64,17 @@ class RomanceEngine
       end
     end
 
+    # 5. 「イキ告」判定 (低いスコアでの告白強行)
+    is_ikikoku = false
+    ikikoku_warning = nil
+    confession_keywords = ["告白", "好き", "付き合って", "愛してる", "プロポーズ"]
+    if confession_keywords.any? { |k| content.include?(k) }
+      if score < 45
+        is_ikikoku = true
+        ikikoku_warning = "【警告】これは「イキ告（いきなり告白）」の典型なのだ！今の距離感で想いを伝えると、高確率で玉砕（事故）するのだ。まずは「友人としての信頼」を貯めるのが先決なのだ！"
+      end
+    end
+
     # スコアの補正とラベル判定
     score = score.clamp(0, 100)
     label = score >= 70 ? "脈アリ" : (score >= 40 ? "五分" : "脈ナシ")
@@ -73,7 +84,9 @@ class RomanceEngine
       "label" => label,
       "details" => details,
       "engine" => "XGBoost-1M-Hybrid",
-      "features" => features
+      "features" => features,
+      "is_ikikoku" => is_ikikoku,
+      "ikikoku_warning" => ikikoku_warning
     }
   end
 

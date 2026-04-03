@@ -112,7 +112,9 @@ class InferenceResult {
   final List<Counterfactual> counterfactuals;
   final List<String> nextActions; // [0]: 攻め, [1]: 様子見, [2]: 撤退
   final String spokenScript;
-  final String? deepAnalysis; // LLMによる生成テキスト
+  final String? deepAnalysis;
+  final bool isIkikoku;
+  final String? ikikokuWarning;
 
   InferenceResult({
     required this.input,
@@ -128,5 +130,8 @@ class InferenceResult {
     required this.nextActions,
     required this.spokenScript,
     this.deepAnalysis,
+    this.isIkikoku = false,
+    this.ikikokuWarning,
+  });
   });
 }
