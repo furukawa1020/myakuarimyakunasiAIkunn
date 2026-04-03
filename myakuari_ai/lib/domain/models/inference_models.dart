@@ -109,7 +109,7 @@ class InferenceResult {
   final List<Factor> topFactors;
   final GraphData graph;
   final List<Counterfactual> counterfactuals;
-  final String nextActions; // [0]: 攻め, [1]: 様子見, [2]: 撤退
+  final List<String> nextActions; // [0]: 攻め, [1]: 様子見, [2]: 撤退
   final String spokenScript;
   final String? deepAnalysis; // LLMによる生成テキスト
 
