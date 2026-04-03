@@ -20,16 +20,21 @@ class InferenceEngine {
     return null;
   }
 
-  /// メインの推論処理 (MLエンジン優先 → ルールベースフォールバック)
-  static InferenceResult analyze(InferenceInput input) {
-    // MLエンジンが読み込まれていれば優先して使用
+  /// メインの推論処理 (Rubyジャパンエンジン優先 → MLエンジン → ルールベース)
+  static Future<InferenceResult> analyze(InferenceInput input) async {
+    // 1. Ruby エンジン (日本市場特化)
+    final ruby = RubyInferenceEngine();
+    final rubyResult = await ruby.analyze(input);
+    if (rubyResult != null) return rubyResult;
+
+    // 2. MLエンジン (旧モデル)
     final ml = MLInferenceEngine.instance;
     if (ml.isLoaded) {
       final result = ml.analyze(input);
       if (result != null) return result;
     }
 
-    // フォールバック: ルールベース推論
+    // 3. フォールバック: ルールベース推論
     return _ruleBasedAnalyze(input);
   }
 

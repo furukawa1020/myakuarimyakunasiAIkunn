@@ -38,7 +38,7 @@ class _LoadingScreenState extends State<LoadingScreen> {
 
     // 実際の推論
     final String? safetyError = InferenceEngine.checkSafety(widget.input);
-    final InferenceResult result = InferenceEngine.analyze(widget.input);
+    final InferenceResult result = await InferenceEngine.analyze(widget.input);
 
     await Future.delayed(const Duration(milliseconds: 800));
 

@@ -3,8 +3,16 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'presentation/theme.dart';
 import 'presentation/screens/home_screen.dart';
+import 'domain/ruby_inference_engine.dart';
+import 'domain/ml_inference_engine.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  
+  // エンジンの初期化
+  await MLInferenceEngine.instance.load();
+  await RubyInferenceEngine().initialize();
+
   runApp(const ProviderScope(child: MyApp()));
 }
 
