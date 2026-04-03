@@ -1,0 +1,14 @@
+[
+  {
+    "source": "Yahoo!知恵袋 (Public Q&A)",
+    "context": "同じ職場の同僚。毎日LINEが来て、スタンプも同じものを使われるようになった。これって脈あり？",
+    "extracted_features": {
+      "who": "職場の同僚",
+      "reply_speed": "早い (毎日)",
+      "sticker_sync": "あり",
+      "direct_invitation": "なし"
+    },
+    "community_label": "脈あり (ベストアンサーより分析)",
+    "confidence": 0.85
+  }
+]
