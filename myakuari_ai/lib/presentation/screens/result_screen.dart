@@ -6,6 +6,7 @@ import '../../domain/bundled_voice_service.dart';
 import '../widgets/glass_card.dart';
 
 import '../widgets/radar_chart.dart';
+import '../../domain/gemma_service.dart';
 
 class ResultScreen extends StatefulWidget {
   final InferenceResult result;
@@ -17,10 +18,34 @@ class ResultScreen extends StatefulWidget {
 }
 
 class _ResultScreenState extends State<ResultScreen> {
+  String? _deepAnalysis;
+  bool _isGenerating = false;
+
   @override
   void initState() {
     super.initState();
     _playVoice();
+    _startDeepAnalysis();
+  }
+
+  Future<void> _startDeepAnalysis() async {
+    if (widget.result.deepAnalysis != null) {
+      setState(() => _deepAnalysis = widget.result.deepAnalysis);
+      return;
+    }
+
+    setState(() => _isGenerating = true);
+    final analysis = await GemmaService().generateDeepAnalysis(
+      widget.result.input, 
+      widget.result.loveScore, 
+      widget.result.labelText
+    );
+    if (mounted) {
+      setState(() {
+        _deepAnalysis = analysis;
+        _isGenerating = false;
+      });
+    }
   }
 
   Future<void> _playVoice() async {
@@ -213,6 +238,48 @@ class _ResultScreenState extends State<ResultScreen> {
               ),
             ),
           ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildDeepAnalysisSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Row(
+          children: [
+            Icon(Icons.psychology, color: Color(0xFFFF007F), size: 24),
+            SizedBox(width: 8),
+            Text(
+              '【AI深層心理解析】',
+              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Color(0xFFFF007F)),
+            ),
+          ],
+        ),
+        const SizedBox(height: 16),
+        GlassCard(
+          padding: const EdgeInsets.all(20),
+          backgroundColor: const Color(0xFFFF007F).withOpacity(0.04),
+          borderColor: const Color(0xFFFF007F).withOpacity(0.2),
+          child: _isGenerating
+              ? const Column(
+                  children: [
+                    LinearProgressIndicator(
+                      backgroundColor: Colors.white10,
+                      color: Color(0xFFFF007F),
+                    ),
+                    SizedBox(height: 16),
+                    Text(
+                      'ずんだもんが深層心理を読み解き中なのだ...',
+                      style: TextStyle(fontSize: 13, color: Colors.white70, fontStyle: FontStyle.italic),
+                    ),
+                  ],
+                )
+              : Text(
+                  _deepAnalysis ?? '解析準備中なのだ...',
+                  style: const TextStyle(fontSize: 15, color: Colors.white, height: 1.6),
+                ),
         ),
       ],
     );

@@ -79,6 +79,7 @@ class InferenceEngine {
     String script = _generateSpokenScript(label, finalScore, topFactors.isNotEmpty ? topFactors.first : null, nextActions.first);
 
     return InferenceResult(
+      input: input,
       label: label,
       labelText: label.text,
       loveScore: finalScore,

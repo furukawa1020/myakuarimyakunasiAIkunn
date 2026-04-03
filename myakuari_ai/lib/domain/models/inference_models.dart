@@ -100,6 +100,7 @@ class GraphData {
 }
 
 class InferenceResult {
+  final InferenceInput input;
   final Label label;
   final String labelText;
   final int loveScore;
@@ -114,6 +115,7 @@ class InferenceResult {
   final String? deepAnalysis; // LLMによる生成テキスト
 
   InferenceResult({
+    required this.input,
     required this.label,
     required this.labelText,
     required this.loveScore,

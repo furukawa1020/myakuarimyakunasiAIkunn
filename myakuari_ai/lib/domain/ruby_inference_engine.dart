@@ -84,6 +84,7 @@ class RubyInferenceEngine {
       
       // InferenceResult へのマッピング (簡略化)
       return InferenceResult(
+        input: input,
         label: _parseLabel(data['label']),
         labelText: data['label'],
         loveScore: data['score'],
