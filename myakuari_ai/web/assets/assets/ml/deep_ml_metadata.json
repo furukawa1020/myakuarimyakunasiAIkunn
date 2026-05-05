@@ -1,0 +1,35 @@
+{
+  "features": [
+    "reply_speed_avg",
+    "reply_speed_var",
+    "msg_len_ratio",
+    "initiation_ratio",
+    "sticker_freq",
+    "sticker_sync",
+    "emotion_density",
+    "question_freq",
+    "self_disclosure",
+    "date_proposal_count",
+    "concreteness",
+    "honorific_casual_ratio",
+    "night_time_ratio",
+    "weekend_comm_ratio",
+    "keyword_overlap",
+    "indirect_inv_count",
+    "soft_denial_freq",
+    "read_ignore_duration",
+    "pers_question_count",
+    "compliment_freq",
+    "context_consistency",
+    "future_ref_count",
+    "third_party_ref",
+    "social_dist_type"
+  ],
+  "classes": [
+    "脈ナシ",
+    "五分",
+    "脈アリ"
+  ],
+  "accuracy": 0.993262,
+  "engine": "XGBoost-1M-Deep"
+}

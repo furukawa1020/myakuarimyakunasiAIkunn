@@ -1,0 +1,20 @@
+{
+  "features": [
+    "reply_speed",
+    "sticker_sync",
+    "topic_depth",
+    "invitation_direct",
+    "face_to_face_freq",
+    "honorific_drop"
+  ],
+  "importances": [
+    0.25811788307019184,
+    0.03756935988576636,
+    0.09506435368219188,
+    0.3116957381964774,
+    0.25394985361080413,
+    0.04360281155456822
+  ],
+  "baseline_score": 50,
+  "source": "Japan Government & Recruit Stats 2026"
+}
