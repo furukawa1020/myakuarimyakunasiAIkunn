@@ -51,7 +51,6 @@ dependencies:
   flutter_hooks: ^0.20.5
   onnxruntime_flutter: ^0.1.0
   share_plus: ^10.0.0
-  path_provider: ^2.1.0
 
 dev_dependencies:
   flutter_test:
