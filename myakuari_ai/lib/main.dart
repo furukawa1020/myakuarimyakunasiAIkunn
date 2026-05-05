@@ -6,6 +6,7 @@ import 'presentation/screens/home_screen.dart';
 import 'domain/ruby_inference_engine.dart';
 import 'domain/ml_inference_engine.dart';
 import 'domain/gemma_service.dart';
+import 'domain/onnx_inference_engine.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -13,6 +14,7 @@ void main() async {
   // エンジンの初期化
   await MLInferenceEngine.instance.load();
   await RubyInferenceEngine().initialize();
+  await OnnxInferenceEngine().initialize(); // PyTorch DNN (ONNX)
   await GemmaService().initialize();
 
   runApp(const ProviderScope(child: MyApp()));
