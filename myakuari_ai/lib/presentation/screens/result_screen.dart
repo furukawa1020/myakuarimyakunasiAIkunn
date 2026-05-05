@@ -75,12 +75,15 @@ class _ResultScreenState extends State<ResultScreen> {
           await image.toByteData(format: ui.ImageByteFormat.png);
       Uint8List pngBytes = byteData!.buffer.asUint8List();
 
-      final tempDir = await getTemporaryDirectory();
-      final file = await File('${tempDir.path}/diagnosis_result.png').create();
-      await file.writeAsBytes(pngBytes);
+      // Webでも動作するように、ファイルパスではなく直接メモリ(Bytes)からXFileを作成する
+      final xFile = XFile.fromData(
+        pngBytes,
+        mimeType: 'image/png',
+        name: 'diagnosis_result.png',
+      );
 
       await Share.shareXFiles(
-        [XFile(file.path)],
+        [xFile],
         text: '【恋愛診断AIくん】ずんだもんが俺の恋路を診断してくれたのだ！\n'
             'スコア: ${widget.result.loveScore}点\n'
             '判定: ${widget.result.labelText}\n'
