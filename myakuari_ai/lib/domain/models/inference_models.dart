@@ -133,5 +133,4 @@ class InferenceResult {
     this.isIkikoku = false,
     this.ikikokuWarning,
   });
-  });
 }

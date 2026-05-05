@@ -76,11 +76,11 @@ class InferenceEngine {
     return InferenceResult(
       input: input,
       label: label,
-      labelText: _getLabelText(label),
+      labelText: label == Label.like ? '脈アリ' : (label == Label.neutral ? '五分' : '脈ナシ'),
       loveScore: finalScore,
       confidence: 0.8,
       compatibilityGrade: _ruleBasedGrade(finalScore),
-      radarData: _buildRadarData(factors, finalScore),
+      radarData: _generateFallbackRadarData(input),
       topFactors: topFactors,
       graph: graph,
       counterfactuals: counterfactuals,
