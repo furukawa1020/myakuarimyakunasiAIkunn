@@ -2,7 +2,6 @@ import 'dart:math';
 
 import 'models/inference_models.dart';
 import 'ml_inference_engine.dart';
-import 'onnx_inference_engine.dart';
 
 class InferenceEngine {
   static const int _baseScore = 50;
@@ -28,21 +27,14 @@ class InferenceEngine {
     final rubyResult = await ruby.analyze(input);
     if (rubyResult != null) return rubyResult;
 
-    // 2. 新開発: PyTorch Deep Learning ONNX エンジン
-    final onnx = OnnxInferenceEngine();
-    if (onnx.isLoaded) {
-      final result = await onnx.analyze(input);
-      if (result != null) return result;
-    }
-
-    // 3. 旧MLエンジン (フォールバック)
+    // 2. 旧MLエンジン (フォールバック)
     final ml = MLInferenceEngine.instance;
     if (ml.isLoaded) {
       final result = ml.analyze(input);
       if (result != null) return result;
     }
 
-    // 4. 最終フォールバック: ルールベース推論
+    // 3. 最終フォールバック: ルールベース推論
     return _ruleBasedAnalyze(input);
   }
 

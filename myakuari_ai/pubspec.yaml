@@ -47,9 +47,8 @@ dependencies:
   ffi: ^2.2.0
   path: ^1.9.1
   http: ^1.3.0
-  flutter_gemma: ^1.0.3
+  flutter_gemma: ^0.12.6
   flutter_hooks: ^0.20.5
-  onnxruntime_flutter: ^0.1.0
   share_plus: ^10.0.0
 
 dev_dependencies:
