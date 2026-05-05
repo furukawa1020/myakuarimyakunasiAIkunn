@@ -1,28 +1,22 @@
-import 'package:flutter_gemma/flutter_gemma.dart';
 import 'models/inference_models.dart';
 
-/// FlutterGemma を使ったオンデバイス LLM 制御クラス
+/// FlutterGemma を使ったオンデバイス LLM 制御クラス (Web用にスタブ化)
 class GemmaService {
   static final GemmaService _instance = GemmaService._internal();
   factory GemmaService() => _instance;
   GemmaService._internal();
 
   bool _initialized = false;
-  final _gemma = FlutterGemmaPlugin.instance;
 
   Future<void> initialize() async {
     if (_initialized) return;
     try {
-      // モデルが所定のパス(assets/ml/等)にあるか、
-      // 外部から読み込まれている必要があります。
-      await _gemma.init(
-        maxTokens: 512,
-        temperature: 0.7,
-        topK: 40,
-        randomSeed: 42,
-      );
       _initialized = true;
     } catch (e) {
+      print('Gemma initialization failed: $e');
+      _initialized = false;
+    }
+  }
       print('Gemma initialization failed: $e');
       _initialized = false;
     }
@@ -37,16 +31,8 @@ class GemmaService {
     final prompt = _buildPrompt(input, score, label);
     
     try {
-      // 応答生成 (ストリーミングではなく一括取得)
-      final response = await _gemma.getChatResponse(
-        messages: [
-          Message(
-            role: 'user', 
-            text: prompt
-          ),
-        ],
-      );
-      return response ?? '解析に失敗したのだ...、でも君の恋は応援してるのだ！';
+      // 応答生成 (ストリーミングではなく一括取得) (Web版はスタブ)
+      return 'Web版では生成AIは使えないのだ！でも君の恋は応援してるのだ！';
     } catch (e) {
       return 'AIが照れてるみたいで、今は解析できないのだ。エラー: $e';
     }

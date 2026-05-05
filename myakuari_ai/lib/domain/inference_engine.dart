@@ -20,14 +20,9 @@ class InferenceEngine {
     return null;
   }
 
-  /// メインの推論処理 (Rubyジャパンエンジン優先 → MLエンジン → ルールベース)
+  /// メインの推論処理 (MLエンジン → ルールベース)
   static Future<InferenceResult> analyze(InferenceInput input) async {
-    // 1. Ruby エンジン (日本市場特化)
-    final ruby = RubyInferenceEngine();
-    final rubyResult = await ruby.analyze(input);
-    if (rubyResult != null) return rubyResult;
-
-    // 2. 旧MLエンジン (フォールバック)
+    // 1. 旧MLエンジン (フォールバック)
     final ml = MLInferenceEngine.instance;
     if (ml.isLoaded) {
       final result = ml.analyze(input);
@@ -78,6 +73,18 @@ class InferenceEngine {
     // 9. 音声スクリプト (SpokenScript)
     String script = _generateSpokenScript(label, finalScore, topFactors.isNotEmpty ? topFactors.first : null, nextActions.first);
 
+    return InferenceResult(
+      input: input,
+      label: label,
+      labelText: _getLabelText(label),
+      loveScore: finalScore,
+      confidence: 0.8,
+      compatibilityGrade: _ruleBasedGrade(finalScore),
+      radarData: _buildRadarData(factors, finalScore),
+      topFactors: topFactors,
+      graph: graph,
+      counterfactuals: counterfactuals,
+      nextActions: nextActions,
       spokenScript: script,
       deepAnalysis: null,
       isIkikoku: _checkIkikoku(input, finalScore),
