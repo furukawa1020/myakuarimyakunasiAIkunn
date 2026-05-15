@@ -8,11 +8,11 @@ extension LabelExtension on Label {
   String get text {
     switch (this) {
       case Label.like:
-        return '脈アリ';
+        return 'AFFINITY_SIGNAL_CONFIRMED';
       case Label.neutral:
-        return '五分';
+        return 'NOISE_FLOOR_UNCERTAIN';
       case Label.nope:
-        return '脈ナシ';
+        return 'TERMINAL_ENTROPY_DETECTED';
     }
   }
 }
@@ -115,6 +115,7 @@ class InferenceResult {
   final String? deepAnalysis;
   final bool isIkikoku;
   final String? ikikokuWarning;
+  final Map<String, double> featureImportance; // SHAP-like feature contribution
 
   InferenceResult({
     required this.input,
@@ -129,6 +130,7 @@ class InferenceResult {
     required this.counterfactuals,
     required this.nextActions,
     required this.spokenScript,
+    required this.featureImportance,
     this.deepAnalysis,
     this.isIkikoku = false,
     this.ikikokuWarning,

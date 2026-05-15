@@ -73,12 +73,15 @@ class InferenceEngine {
     // 9. 音声スクリプト (SpokenScript)
     String script = _generateSpokenScript(label, finalScore, topFactors.isNotEmpty ? topFactors.first : null, nextActions.first);
 
+    // 10. Explainability Data (Feature Importance)
+    Map<String, double> importance = _calculateFeatureImportance(factors);
+
     return InferenceResult(
       input: input,
       label: label,
-      labelText: label == Label.like ? '脈アリ' : (label == Label.neutral ? '五分' : '脈ナシ'),
+      labelText: label.text,
       loveScore: finalScore,
-      confidence: 0.8,
+      confidence: confidence,
       compatibilityGrade: _ruleBasedGrade(finalScore),
       radarData: _generateFallbackRadarData(input),
       topFactors: topFactors,
@@ -86,10 +89,19 @@ class InferenceEngine {
       counterfactuals: counterfactuals,
       nextActions: nextActions,
       spokenScript: script,
+      featureImportance: importance,
       deepAnalysis: null,
       isIkikoku: _checkIkikoku(input, finalScore),
-      ikikokuWarning: _checkIkikoku(input, finalScore) ? '【警告】これは「イキ告」の恐れがあるのだ！今の距離感で告白するのは自殺行為なのだ。' : null,
+      ikikokuWarning: _checkIkikoku(input, finalScore) ? '【SYSTEM_ALERT】HEART_BREAKER_DETECTED: 距離感の不一致により、告白シーケンスは直ちに中断されるべきなのだ。' : null,
     );
+  }
+
+  static Map<String, double> _calculateFeatureImportance(List<Factor> factors) {
+    Map<String, double> importance = {};
+    for (var f in factors) {
+      importance[f.title] = f.scoreImpact.abs().toDouble();
+    }
+    return importance;
   }
 
   static bool _checkIkikoku(InferenceInput input, int score) {
@@ -270,13 +282,21 @@ class InferenceEngine {
     }
   }
 
-  static String _generateSpokenScript(Label label, int score, Factor? topFactor, String action) {
-    String out = '判定は${label.text}！スコアは$score点なのだ。';
-    if (topFactor != null) {
-      out += '決め手は「${topFactor.title}」の影響が大きいのだ。';
+  static String _generateSpokenScript(Label label, int score, Factor? topFactor, String nextAction) {
+    String msg = '';
+    if (score < 40) {
+      msg = '【警告】熱力学第二法則に基づき、君の期待はエントロピーの増大と共に無に帰したのだ。';
+    } else if (score > 70) {
+      msg = '【検出】共鳴周波数の合致を確認。通信プロトコルは正常に確立されているのだ。';
+    } else {
+      msg = '【分析】SN比が不十分なのだ。もっと有効なパケットを送信する必要があるのだ。';
     }
-    out += '次の一手のオススメは、$action、なのだ！';
-    out += '※あくまで独自の推論による結論なのだ。参考程度にお願いするのだ。';
-    return out;
+
+    if (topFactor != null) {
+      msg += '特に「${topFactor.title}」のパラメータが推論に大きく寄与しているのだ。';
+    }
+    msg += '推奨アクション: $nextAction を即時実行せよなのだ。';
+    msg += '※あくまで独自の推論による結論なのだ。参考程度にお願いするのだ。';
+    return msg;
   }
 }

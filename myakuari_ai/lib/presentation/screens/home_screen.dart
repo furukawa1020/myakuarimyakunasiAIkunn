@@ -1,9 +1,4 @@
-import 'package:flutter/material.dart';
-import 'wizard_screen.dart';
-import 'history_screen.dart';
-import 'settings_screen.dart';
-import 'about_screen.dart';
-import '../widgets/character_view.dart';
+import '../widgets/terminal_overlay.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -16,17 +11,19 @@ class HomeScreen extends StatelessWidget {
     return Scaffold(
       body: Stack(
         children: [
-          // ── 背景グラデーション（ゲームっぽい暗い背景） ──
+          // ── Background: Grid & Dark Space ──
           Positioned.fill(
             child: Container(
-              decoration: const BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [Color(0xFF0A0015), Color(0xFF0D0A2E), Color(0xFF000E1A)],
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                ),
+              color: AppTheme.background,
+              child: CustomPaint(
+                painter: GridPainter(),
               ),
             ),
+          ),
+
+          // ── Terminal Log Overlay ──
+          const Positioned.fill(
+            child: TerminalOverlay(),
           ),
 
           // ── 背景の輝き（ネオングロー） ──
@@ -80,24 +77,36 @@ class HomeScreen extends StatelessWidget {
               children: [
                 const SizedBox(height: 20),
 
-                // ── タイトル ──
+                // ── Technical Header ──
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 20),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // 1行目: 「脈アリ！？」「脈ナシ！？」 横並び
-                      FittedBox(
-                        fit: BoxFit.scaleDown,
-                        alignment: Alignment.centerLeft,
-                        child: Row(
-                          children: [
-                            _OutlinedText(
-                              '脈アリ！？',
-                              fontSize: 42,
-                              fillColor: const Color(0xFFFF2060),
-                              strokeColor: Colors.white,
-                              strokeWidth: 6,
+                      Text(
+                        'SYSTEM_ANALYZE: EMOTIONAL_SIGNAL_L7',
+                        style: TextStyle(
+                          color: AppTheme.systemGreen.withOpacity(0.7),
+                          fontSize: 12,
+                          letterSpacing: 2,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        'HOPELESS_ENTROPY\nDETECTOR_V2.0',
+                        style: GoogleFonts.shareTechMono(
+                          fontSize: 48,
+                          height: 1.0,
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                          shadows: [
+                            const Shadow(
+                              color: AppTheme.systemGreen,
+                              blurRadius: 10,
+                            ),
+                          ],
+                        ),
+                      ),
                             ),
                             const SizedBox(width: 8),
                             _OutlinedText(
