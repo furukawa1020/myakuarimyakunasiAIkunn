@@ -81,6 +81,8 @@ class _ResultScreenState extends State<ResultScreen> {
             children: [
               _buildAppBar(systemColor),
               _buildDiagnosticsSummary(systemColor),
+              _buildTransformerStatus(systemColor),
+              _buildAttentionHeatmap(systemColor),
               _buildFeatureImportanceMap(systemColor),
               _buildDialoguePanel(charState, systemColor),
               _buildStrategyLogs(systemColor),
@@ -135,6 +137,68 @@ class _ResultScreenState extends State<ResultScreen> {
           ),
           const SizedBox(height: 8),
           Text('CONFIDENCE_LEVEL: ${widget.result.confidence.toStringAsFixed(4)}', style: const TextStyle(color: Colors.white54, fontSize: 10)),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTransformerStatus(Color color) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+      child: Row(
+        children: [
+          Icon(Icons.memory, size: 14, color: color),
+          const SizedBox(width: 8),
+          Text('ENGINE: EDGE-TRANSFORMER-V2.0 | ATTENTION_HEADS: 8 | LAYERS: 6', 
+            style: TextStyle(color: color.withOpacity(0.6), fontSize: 9)),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAttentionHeatmap(Color color) {
+    final keys = widget.result.attentionMap.keys.toList();
+    return Container(
+      padding: const EdgeInsets.all(24),
+      margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+      decoration: BoxDecoration(
+        border: Border.all(color: Colors.white12),
+        color: Colors.white.withOpacity(0.02),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text('SELF_ATTENTION_WEIGHT_MATRIX', style: TextStyle(color: Colors.white70, fontSize: 10)),
+          const SizedBox(height: 16),
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final size = constraints.maxWidth / (keys.length + 1);
+              return Column(
+                children: [
+                  Row(
+                    children: [
+                      SizedBox(width: size),
+                      ...keys.map((k) => SizedBox(width: size, child: Center(child: Text(k.substring(0, 1), style: const TextStyle(fontSize: 8, color: Colors.white54))))),
+                    ],
+                  ),
+                  ...keys.map((i) => Row(
+                    children: [
+                      SizedBox(width: size, child: Text(i.substring(0, 1), style: const TextStyle(fontSize: 8, color: Colors.white54))),
+                      ...keys.map((j) {
+                        final val = widget.result.attentionMap[i]![j] ?? 0.0;
+                        return Container(
+                          width: size,
+                          height: size,
+                          margin: const EdgeInsets.all(1),
+                          color: color.withOpacity(val.clamp(0.0, 1.0)),
+                        );
+                      }),
+                    ],
+                  )),
+                ],
+              );
+            },
+          ),
         ],
       ),
     );

@@ -115,7 +115,8 @@ class InferenceResult {
   final String? deepAnalysis;
   final bool isIkikoku;
   final String? ikikokuWarning;
-  final Map<String, double> featureImportance; // SHAP-like feature contribution
+  final Map<String, double> featureImportance;
+  final Map<String, Map<String, double>> attentionMap; // Self-attention weights between 5W1H
 
   InferenceResult({
     required this.input,
@@ -131,6 +132,7 @@ class InferenceResult {
     required this.nextActions,
     required this.spokenScript,
     required this.featureImportance,
+    required this.attentionMap,
     this.deepAnalysis,
     this.isIkikoku = false,
     this.ikikokuWarning,

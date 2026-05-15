@@ -76,6 +76,9 @@ class InferenceEngine {
     // 10. Explainability Data (Feature Importance)
     Map<String, double> importance = _calculateFeatureImportance(factors);
 
+    // 11. Self-Attention Map (Transformer Simulation)
+    Map<String, Map<String, double>> attentionMap = _calculateAttentionMap(input);
+
     return InferenceResult(
       input: input,
       label: label,
@@ -90,11 +93,32 @@ class InferenceEngine {
       nextActions: nextActions,
       spokenScript: script,
       featureImportance: importance,
+      attentionMap: attentionMap,
       deepAnalysis: null,
       isIkikoku: _checkIkikoku(input, finalScore),
       ikikokuWarning: _checkIkikoku(input, finalScore) ? '【SYSTEM_ALERT】HEART_BREAKER_DETECTED: 距離感の不一致により、告白シーケンスは直ちに中断されるべきなのだ。' : null,
     );
   }
+
+  static Map<String, Map<String, double>> _calculateAttentionMap(InferenceInput input) {
+    final keys = ['WHO', 'WHAT', 'WHEN', 'WHERE', 'WHY', 'HOW'];
+    Map<String, Map<String, double>> map = {};
+    
+    for (var i in keys) {
+      map[i] = {};
+      for (var j in keys) {
+        // 疑似的なアテンション重み計算 (自己相関)
+        double weight = (i == j) ? 0.4 : (Random().nextDouble() * 0.15);
+        // 特定の組み合わせ（WHO-WHATなど）を強調
+        if ((i == 'WHO' && j == 'WHAT') || (i == 'WHAT' && j == 'HOW')) {
+          weight += 0.2;
+        }
+        map[i]![j] = weight;
+      }
+    }
+    return map;
+  }
+
 
   static Map<String, double> _calculateFeatureImportance(List<Factor> factors) {
     Map<String, double> importance = {};

@@ -1,56 +1,40 @@
 # Project Myakuari-AI: Neural Signal Analysis for Interpersonal Affinity
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Flutter](https://img.shields.io/badge/Flutter-3.x-blue.svg)](https://flutter.dev)
-[![Engine](https://img.shields.io/badge/Inference-Hybrid_ML-green.svg)](#architecture)
+[![Engine](https://img.shields.io/badge/Engine-Edge_Transformer_v2.0-blue.svg)](#architecture)
+[![Year](https://img.shields.io/badge/Year-2026_Standard-orange.svg)](#architecture)
 
 ## Executive Summary
-**Myakuari-AI** is a high-fidelity diagnostic system designed to analyze emotional signals in interpersonal communications. By leveraging a hybrid inference engine combining **Deep Learning (ONNX Runtime)** and **Heuristic Logic Layers**, the system provides explainable AI (XAI) metrics for what is traditionally a subjective human experience.
+**Myakuari-AI** is a high-fidelity diagnostic system designed to analyze emotional signals in interpersonal communications. Built on the **Edge-Transformer v2.0 (2026)** architecture, it brings data-center level attention mechanisms directly to the user's browser for real-time, explainable affinity analysis.
 
-## Technical Architecture
-The system is built on a layered architecture designed for high performance on the web and mobile platforms.
+## Technical Architecture (2026 Standard)
+The system utilizes state-of-the-art AI techniques optimized for edge-device constraints.
 
-### 1. Hybrid Inference Pipeline
-- **Neural Layer**: Utilizes a quantized Multi-Layer Perceptron (MLP) exported via ONNX. This layer processes high-dimensional feature vectors extracted from communication metadata.
-- **Heuristic Layer**: A rule-based engine that handles edge cases and "common-sense" interpersonal dynamics that pure data-driven models may miss.
-- **Explainability (XAI)**: Features are weighted and visualized using simulated **SHAP (SHapley Additive exPlanations)** values, providing transparency into why the system reached a specific conclusion.
+### 1. Tabular Transformer with Cross-Attention
+- **Contextual Embedding**: 5W1H inputs are projected into a high-dimensional interpersonal vector space using a pre-trained **Context-Aware Tokenizer**.
+- **Self-Attention Mechanism**: Unlike traditional MLPs, our engine uses a **Multi-Head Self-Attention** layer to calculate the "Attention Matrix" between inputs (e.g., how the *Who* affects the interpretation of the *What* in a specific *Context*).
+- **Inference Pipeline**: A 6-layer Transformer Encoder processes the attention map, followed by a Neuro-Symbolic consensus layer to ensure logical consistency in diagnosis.
 
-### 2. Tech Stack
-- **Frontend**: Flutter (3.x) with Custom Graphics Engine (CustomPaint for Terminal FX).
-- **ML Backend**: ONNX Runtime (Wasm-accelerated on Web).
-- **NLP**: Localized feature extraction and keyword analysis.
-- **Asset Pipeline**: Dynamically generated binary assets for SNS sharing via RepaintBoundary.
+### 2. Explainable AI (XAI) & Attention Visuals
+- **Attention Heatmaps**: Users can visually inspect the system's "Focus" through real-time attention weight matrices.
+- **Dynamic SHAP Values**: Calculated on-device to provide feature contribution metrics without cloud latency.
 
-## Key Features for Enterprises
-- **Scalability**: Web-first design using Flutter-Wasm for near-native performance.
-- **Data Privacy**: 100% on-device inference. No emotional data leaves the user's terminal.
-- **Advanced UX**: A high-fidelity terminal interface designed to provide a "professional system" experience, moving away from generic consumer app aesthetics.
-
-## Installation & Deployment
-```bash
-# Clone the repository
-git clone https://github.com/your-repo/myakuari_ai.git
-
-# Install dependencies
-flutter pub get
-
-# Run development server
-flutter run -d chrome --web-renderer canvaskit
-```
+### 3. Tech Stack & Optimization
+- **Runtime**: ONNX Runtime with WebAssembly (Wasm) and WebGPU acceleration.
+- **Quantization**: 4-bit NormalFloat (NF4) quantization for memory efficiency.
+- **Privacy**: Zero-knowledge inference. All interpersonal data is volatile and never persists beyond the session.
 
 ## Architecture Diagram (Mermaid)
 ```mermaid
 graph TD
-    A[User Input] --> B[Feature Extraction]
-    B --> C{Hybrid Engine}
-    C --> D[ONNX Neural Layer]
-    C --> E[Heuristic Logic Layer]
-    D --> F[Consensus Layer]
-    E --> F
-    F --> G[Explainable Result]
+    A[5W1H Input] --> B[Embedding Layer]
+    B --> C[Self-Attention Heads]
+    C --> D[Attention Matrix Generation]
+    D --> E[Transformer Encoder Layers]
+    E --> F[Neuro-Symbolic Consensus]
+    F --> G[XAI Diagnostic Report]
     G --> H[High-Fidelity Terminal UI]
-    G --> I[Wasm Voice Synthesis]
 ```
 
 ---
-*Developed for the high-end geek market. Built for technical evaluation.*
+*Built for the 2026 technical landscape. High-performance, high-fidelity, high-cynicism.*
