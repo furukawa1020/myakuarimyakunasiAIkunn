@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import '../../domain/models/inference_models.dart';
 import '../../domain/inference_engine.dart';
 import '../widgets/character_view.dart';
 import 'result_screen.dart';
 import '../../domain/ml_inference_engine.dart';
+import '../theme.dart';
 
 class LoadingScreen extends StatefulWidget {
   final InferenceInput input;
@@ -15,7 +17,8 @@ class LoadingScreen extends StatefulWidget {
 }
 
 class _LoadingScreenState extends State<LoadingScreen> {
-  String _statusMessage = '5W1Hを解析中...';
+  String _statusMessage = 'SIGNAL_DECRYPTING...';
+  double _progress = 0.0;
 
   @override
   void initState() {
@@ -24,73 +27,65 @@ class _LoadingScreenState extends State<LoadingScreen> {
   }
 
   Future<void> _processInference() async {
-    // 演出のための擬似ロード時間
-    await Future.delayed(const Duration(seconds: 1));
-    if (mounted) setState(() => _statusMessage = 'AIモデルをロード中...');
+    await Future.delayed(const Duration(milliseconds: 500));
+    if (mounted) setState(() { _statusMessage = 'LOADING_NEURAL_WEIGHTS...'; _progress = 0.3; });
     
-    // MLエンジンのロード
     await MLInferenceEngine.instance.load();
 
-    if (mounted) setState(() => _statusMessage = '特徴量を抽出中...');
-    await Future.delayed(const Duration(milliseconds: 800));
+    if (mounted) setState(() { _statusMessage = 'EXTRACTING_FEATURE_VECTORS...'; _progress = 0.6; });
+    await Future.delayed(const Duration(milliseconds: 600));
     
-    if (mounted) setState(() => _statusMessage = '実データに基づき推論中...');
+    if (mounted) setState(() { _statusMessage = 'RUNNING_HYBRID_INFERENCE...'; _progress = 0.9; });
 
-    // 実際の推論
-    final String? safetyError = InferenceEngine.checkSafety(widget.input);
     final InferenceResult result = await InferenceEngine.analyze(widget.input);
 
-    await Future.delayed(const Duration(milliseconds: 800));
+    await Future.delayed(const Duration(milliseconds: 500));
 
     if (mounted) {
-      if (safetyError != null) {
-        // 安全フィルタ警告画面または結果画面でエラー処理
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(safetyError), backgroundColor: Colors.red));
-        Navigator.pop(context);
-      } else {
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (_) => ResultScreen(result: result)),
-        );
-      }
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => ResultScreen(result: result)),
+      );
     }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Stack(
-        children: [
-          Positioned.fill(
-            child: Container(
-              decoration: const BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [Color(0xFF1A1A2E), Color(0xFF16213E), Color(0xFF0F3460)],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
+      backgroundColor: AppTheme.background,
+      body: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const SizedBox(
+              height: 180,
+              child: CharacterView(state: CharacterState.thinking),
+            ),
+            const SizedBox(height: 48),
+            SizedBox(
+              width: 240,
+              child: Column(
+                children: [
+                  LinearProgressIndicator(
+                    value: _progress,
+                    backgroundColor: Colors.white10,
+                    color: AppTheme.systemGreen,
+                    minHeight: 2,
+                  ),
+                  const SizedBox(height: 12),
+                  Text(
+                    _statusMessage,
+                    style: GoogleFonts.shareTechMono(
+                      fontSize: 14, 
+                      color: AppTheme.systemGreen,
+                      letterSpacing: 1.2,
+                    ),
+                  ),
+                ],
               ),
             ),
-          ),
-          Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const SizedBox(
-                  height: 200,
-                  child: CharacterView(state: CharacterState.thinking),
-                ),
-                const SizedBox(height: 32),
-                const CircularProgressIndicator(color: Color(0xFFFF007F)),
-                const SizedBox(height: 24),
-                Text(
-                  _statusMessage,
-                  style: const TextStyle(fontSize: 18, color: Color(0xFF00FFFF)),
-                ),
-              ],
-            ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
