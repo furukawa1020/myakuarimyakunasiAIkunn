@@ -69,7 +69,7 @@ class _ResultScreenState extends State<ResultScreen> {
   @override
   Widget build(BuildContext context) {
     Color systemColor = widget.result.label == Label.like ? AppTheme.systemGreen : (widget.result.label == Label.neutral ? AppTheme.warningAmber : AppTheme.alertRed);
-    CharacterState charState = widget.result.label == Label.like ? CharacterState.happy : (widget.result.label == Label.neutral ? CharacterState.thinking : CharacterState.sad);
+    CharacterState charState = widget.result.label == Label.like ? CharacterState.announceGood : (widget.result.label == Label.neutral ? CharacterState.thinking : CharacterState.announceBad);
 
     return Scaffold(
       backgroundColor: AppTheme.background,
