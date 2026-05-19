@@ -6,7 +6,9 @@ import '../widgets/character_view.dart';
 import '../widgets/glass_card.dart';
 
 class WizardScreen extends StatefulWidget {
-  const WizardScreen({super.key});
+  final String? initialText;
+
+  const WizardScreen({super.key, this.initialText});
 
   @override
   State<WizardScreen> createState() => _WizardScreenState();
@@ -49,6 +51,9 @@ class _WizardScreenState extends State<WizardScreen> {
   @override
   void initState() {
     super.initState();
+    if (widget.initialText != null) {
+      _whatController.text = widget.initialText!;
+    }
     _initTts();
   }
 
