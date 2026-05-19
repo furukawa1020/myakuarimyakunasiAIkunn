@@ -69,7 +69,7 @@ class _ResultScreenState extends State<ResultScreen> {
           ? 'http://localhost:8787'
           : 'https://myakuari-ogp-generator.myakuarimyakunasiaikunn.workers.dev';
       final shareUrl = '$workerUrl?score=$_simulatedScore&label=${Uri.encodeComponent(widget.result.labelText)}';
-      final text = '【恋愛診断AI君: SYSTEM_DIAGNOSTICS】\n私の絶望スコアは ${_simulatedScore}% でした。\n\n詳細な分析結果はこちら:\n$shareUrl\n\n#恋愛診断AI君 #ずんだもん #EdgeTransformer';
+      final text = '【脈アリ！？脈ナシ！？教えて！AI君：診断結果】\n私の絶望スコアは ${_simulatedScore}% でした。\n\n詳細な分析結果はこちら:\n$shareUrl\n\n#恋愛診断AI君 #ずんだもん #EdgeTransformer';
       
       final xIntentUrl = 'https://x.com/intent/tweet?text=${Uri.encodeComponent(text)}';
       WebAudioInterop.openNewTab(xIntentUrl);
@@ -124,7 +124,7 @@ class _ResultScreenState extends State<ResultScreen> {
                 onPressed: _captureAndShare,
                 backgroundColor: systemColor.withOpacity(0.2),
                 icon: Icon(Icons.share, color: systemColor),
-                label: Text('SHARE', style: TextStyle(color: systemColor, fontSize: 12)),
+                label: Text('結果をシェア', style: TextStyle(color: systemColor, fontSize: 12)),
               ),
             ),
             const SizedBox(width: 12),
@@ -154,7 +154,7 @@ class _ResultScreenState extends State<ResultScreen> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text('REPORT_V2.0_SECURE', style: TextStyle(color: color, fontSize: 12, letterSpacing: 1.5)),
+          Text('診断レポート (セキュア接続)', style: TextStyle(color: color, fontSize: 12, letterSpacing: 1.5)),
           IconButton(onPressed: () => Navigator.pop(context), icon: Icon(Icons.close, color: color)),
         ],
       ),
@@ -175,7 +175,7 @@ class _ResultScreenState extends State<ResultScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('ANALYSIS_SUMMARY', style: TextStyle(color: color, fontSize: 14, fontWeight: FontWeight.bold)),
+          Text('分析サマリー', style: TextStyle(color: color, fontSize: 14, fontWeight: FontWeight.bold)),
           const SizedBox(height: 16),
           Text(widget.result.labelText, style: TextStyle(color: color, fontSize: 24, fontWeight: FontWeight.bold)),
           const SizedBox(height: 16),
@@ -194,7 +194,7 @@ class _ResultScreenState extends State<ResultScreen> {
             ],
           ),
           const SizedBox(height: 8),
-          Text('CONFIDENCE_LEVEL: ${widget.result.confidence.toStringAsFixed(4)}', style: const TextStyle(color: Colors.white54, fontSize: 10)),
+          Text('判定の確証度: ${(widget.result.confidence * 100).toStringAsFixed(1)}%', style: const TextStyle(color: Colors.white54, fontSize: 10)),
         ],
       ),
     );
@@ -245,7 +245,7 @@ class _ResultScreenState extends State<ResultScreen> {
             children: [
               const Icon(Icons.tune, color: Color(0xFF00FFFF), size: 16),
               const SizedBox(width: 8),
-              const Text('WHAT-IF SIMULATION ENGINE', style: TextStyle(color: Color(0xFF00FFFF), fontSize: 12, fontWeight: FontWeight.bold)),
+              const Text('もしもシミュレーター（未来予測）', style: TextStyle(color: Color(0xFF00FFFF), fontSize: 12, fontWeight: FontWeight.bold)),
             ],
           ),
           const SizedBox(height: 16),
@@ -306,7 +306,7 @@ class _ResultScreenState extends State<ResultScreen> {
             children: [
               Icon(Icons.psychology, color: color, size: 16),
               const SizedBox(width: 8),
-              Text('ACTION_PLANNER: 次の一手', style: TextStyle(color: color, fontSize: 12, fontWeight: FontWeight.bold, letterSpacing: 1.5)),
+              Text('攻略プラン：次の一手', style: TextStyle(color: color, fontSize: 12, fontWeight: FontWeight.bold, letterSpacing: 1.5)),
             ],
           ),
           const SizedBox(height: 16),
@@ -345,7 +345,7 @@ class _ResultScreenState extends State<ResultScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('SELF_ATTENTION_WEIGHT_MATRIX', style: TextStyle(color: Colors.white70, fontSize: 10)),
+          const Text('自己注目度・関連性（Attention行列）', style: TextStyle(color: Colors.white70, fontSize: 10)),
           const SizedBox(height: 16),
           LayoutBuilder(
             builder: (context, constraints) {
@@ -385,7 +385,7 @@ class _ResultScreenState extends State<ResultScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text('SHAP_VALUES', style: TextStyle(color: Colors.white70, fontSize: 10)),
+        const Text('特徴量の寄与度（SHAP値）', style: TextStyle(color: Colors.white70, fontSize: 10)),
         const SizedBox(height: 12),
         ...widget.result.featureImportance.entries.take(4).map((e) => Padding(
           padding: const EdgeInsets.only(bottom: 8),
@@ -434,7 +434,7 @@ class _ResultScreenState extends State<ResultScreen> {
                 border: Border.all(color: Colors.white12),
               ),
               child: Text(
-                _deepAnalysis ?? 'DECRYPTING_SIGNAL...',
+                _deepAnalysis ?? '分析中なのだ...',
                 style: GoogleFonts.notoSansJp(fontSize: 13, height: 1.6),
               ),
             ),
