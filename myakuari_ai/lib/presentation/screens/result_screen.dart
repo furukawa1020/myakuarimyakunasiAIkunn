@@ -7,10 +7,12 @@ import '../widgets/radar_chart.dart';
 import '../theme.dart';
 import '../../domain/bundled_voice_service.dart';
 import '../../domain/gemma_service.dart';
+import '../../domain/web_audio_interop.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:flutter/rendering.dart';
 import 'dart:typed_data';
 import 'dart:ui' as ui;
+import 'resonance_screen.dart';
 
 class ResultScreen extends StatefulWidget {
   final InferenceResult result;
@@ -66,8 +68,10 @@ class _ResultScreenState extends State<ResultScreen> {
       // ※実際にはデプロイしたWorkerのURLに書き換えてください
       final workerUrl = 'https://myakuari-ogp.your-worker-subdomain.workers.dev';
       final shareUrl = '$workerUrl?score=$_simulatedScore&label=${Uri.encodeComponent(widget.result.labelText)}';
+      final text = '【恋愛診断AI君: SYSTEM_DIAGNOSTICS】\n私の絶望スコアは ${_simulatedScore}% でした。\n\n詳細な分析結果はこちら:\n$shareUrl\n\n#恋愛診断AI君 #ずんだもん #EdgeTransformer';
       
-      await Share.share('【恋愛診断AI君: SYSTEM_DIAGNOSTICS】\n私の絶望スコアは ${_simulatedScore}% でした。\n\n詳細な分析結果はこちら:\n$shareUrl\n#恋愛診断AI君 #ずんだもん #EdgeTransformer');
+      final xIntentUrl = 'https://x.com/intent/tweet?text=${Uri.encodeComponent(text)}';
+      WebAudioInterop.openNewTab(xIntentUrl);
     } catch (e) {
       debugPrint('Share Error: $e');
     }
@@ -108,11 +112,37 @@ class _ResultScreenState extends State<ResultScreen> {
           ),
         ],
       ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: _captureAndShare,
-        backgroundColor: systemColor.withOpacity(0.2),
-        icon: Icon(Icons.share, color: systemColor),
-        label: Text('SHARE_REPORT', style: TextStyle(color: systemColor)),
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
+      floatingActionButton: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        child: Row(
+          children: [
+            Expanded(
+              child: FloatingActionButton.extended(
+                heroTag: 'share',
+                onPressed: _captureAndShare,
+                backgroundColor: systemColor.withOpacity(0.2),
+                icon: Icon(Icons.share, color: systemColor),
+                label: Text('SHARE', style: TextStyle(color: systemColor, fontSize: 12)),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: FloatingActionButton.extended(
+                heroTag: 'resonance',
+                onPressed: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => ResonanceScreen(result: widget.result),
+                  ),
+                ),
+                backgroundColor: const Color(0xFFFF00FF).withOpacity(0.2),
+                icon: const Icon(Icons.radar, color: Color(0xFFFF00FF)),
+                label: const Text('共鳴スキャン', style: TextStyle(color: Color(0xFFFF00FF), fontSize: 12)),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

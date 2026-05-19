@@ -68,6 +68,12 @@ class MLInferenceEngine {
       final actions    = _generateActions(label);
       final script     = _generateEnhancedScript(label, loveScore, topFactors, features);
 
+      final featureImp = <String, double>{};
+      for (final f in topFactors) {
+        featureImp[f.title] = f.scoreImpact.abs().toDouble();
+      }
+      final attMap     = _calculateAttentionMap(input);
+
       return InferenceResult(
         input: input,
         label: label,
@@ -81,8 +87,8 @@ class MLInferenceEngine {
         counterfactuals: cfs,
         nextActions: actions,
         spokenScript: script,
-        attentionMap: {},
-        featureImportance: {},
+        attentionMap: attMap,
+        featureImportance: featureImp,
         deepAnalysis: null,
       );
     } catch (_) {
@@ -302,5 +308,23 @@ class MLInferenceEngine {
     }
     // 中立なら40-64点
     return (40 + (rawScore * 0.24)).round().clamp(40, 64);
+  }
+
+  Map<String, Map<String, double>> _calculateAttentionMap(InferenceInput input) {
+    final keys = ['WHO', 'WHAT', 'WHEN', 'WHERE', 'WHY', 'HOW'];
+    final map = <String, Map<String, double>>{};
+    final random = math.Random();
+    
+    for (var i in keys) {
+      map[i] = {};
+      for (var j in keys) {
+        double weight = (i == j) ? 0.4 : (random.nextDouble() * 0.15);
+        if ((i == 'WHO' && j == 'WHAT') || (i == 'WHAT' && j == 'HOW')) {
+          weight += 0.2;
+        }
+        map[i]![j] = weight;
+      }
+    }
+    return map;
   }
 }

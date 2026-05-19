@@ -205,6 +205,7 @@
       // Legacy compat
       window.startVoiceRecognition = function(ms) { window.startAudioScan(ms); };
       window.getVoiceResult = function() { return state.transcript || (state.recording ? undefined : ''); };
+      window.openInNewTab = function(url) { window.open(url, '_blank'); };
 
     })();
   </script>

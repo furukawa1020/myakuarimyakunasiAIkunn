@@ -14,6 +14,9 @@ external void _jsStopAudioScan();
 @JS('getAudioState')
 external String _jsGetAudioState();
 
+@JS('openInNewTab')
+external void _jsOpenInNewTab(String url);
+
 /// リアルタイム音声解析の状態スナップショット
 class AudioScanState {
   final bool recording;
@@ -94,5 +97,13 @@ class WebAudioInterop {
     final state = getState();
     stopScan();
     return state.transcript;
+  }
+
+  /// 指定されたURLをブラウザの新しいタブで開く
+  static void openNewTab(String url) {
+    if (!kIsWeb) return;
+    try {
+      _jsOpenInNewTab(url);
+    } catch (_) {}
   }
 }

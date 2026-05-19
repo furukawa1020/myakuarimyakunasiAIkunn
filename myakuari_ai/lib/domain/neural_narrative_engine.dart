@@ -146,7 +146,7 @@ class NeuralNarrativeEngine {
   // ─── 公開インターフェース ────────────────────────────────────────
   static String generate(InferenceInput input, int score) {
     // MLInferenceEngineと同じ特徴ベクトルを構築
-    final features = _buildFeatureVector(input);
+    final features = buildFeatureVector(input);
     // 正規化 (0-10スケール → 0-1)
     final normalized = features.map((f) => (f / 10.0).clamp(0.0, 1.0)).toList();
 
@@ -176,7 +176,7 @@ class NeuralNarrativeEngine {
         '${_closing[cIdx]}';
   }
 
-  static List<double> _buildFeatureVector(InferenceInput input) {
+  static List<double> buildFeatureVector(InferenceInput input) {
     // MLInferenceEngine._buildFeatureVector() と同一ロジック（重複実装）
     final initiativeMap = <String, double>{'相手': 9.0, '半々': 6.0, '自分': 3.0};
     final concreteMap = <String, double>{'YES': 9.0, '未定': 6.0, '止まる': 3.0};

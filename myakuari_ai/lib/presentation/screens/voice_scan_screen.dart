@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'dart:async';
-import 'dart:math' as math;
 import 'wizard_screen.dart';
 import '../theme.dart';
 import '../../domain/web_audio_interop.dart';
@@ -13,145 +12,202 @@ class VoiceScanScreen extends StatefulWidget {
   State<VoiceScanScreen> createState() => _VoiceScanScreenState();
 }
 
-class _VoiceScanScreenState extends State<VoiceScanScreen> with TickerProviderStateMixin {
-  late AnimationController _waveController;
-  final List<String> _logs = [];
-  int _logStep = 0;
-  String _transcribedText = '';
-  final WebAudioInterop _audioInterop = WebAudioInterop();
+class _VoiceScanScreenState extends State<VoiceScanScreen> {
+  final WebAudioInterop _audio = WebAudioInterop();
+  Timer? _pollTimer;
+  AudioScanState _audioState = const AudioScanState();
+  bool _done = false;
 
   @override
   void initState() {
     super.initState();
-    _waveController = AnimationController(vsync: this, duration: const Duration(seconds: 1))..repeat();
-    _startGachiAudioScan();
+    _audio.startScan(const Duration(seconds: 10));
+    // 80ms間隔でJSブリッジから本物のデータをポーリング
+    _pollTimer = Timer.periodic(const Duration(milliseconds: 100), (_) => _poll());
   }
 
-  Future<void> _startGachiAudioScan() async {
-    _addLog('MIC_ACTIVE: PORT 0x01');
-    _addLog('BYPASSING PLUGINS: DIRECT WEB API HOOK INITIATED...');
-    
-    // JS Interopを使ってネイティブのWeb Speech APIを直接叩く（シンボリックリンク問題回避）
-    _addLog('TRANSCRIBING VOCAL DATA...');
-    
-    // タイムアウト5秒で音声認識を実行
-    final transcript = await _audioInterop.transcribeAudio(const Duration(seconds: 5));
-    
-    if (transcript.isNotEmpty && !transcript.startsWith('ERROR')) {
-      _transcribedText = transcript;
-      _addLog('TRANSCRIPTION SUCCESS: [${transcript.length} chars]');
-    } else {
-      _addLog(transcript.isEmpty ? 'NO CLEAR WORDS DETECTED.' : transcript);
-    }
+  void _poll() {
+    if (!mounted || _done) return;
+    final s = _audio.getState();
+    setState(() => _audioState = s);
 
-    _addLog('EXTRACTING MEL-FREQUENCY CEPSTRAL COEFFICIENTS...');
-    await Future.delayed(const Duration(milliseconds: 300));
-    
-    _addLog('ANALYZING VOCAL JITTER...');
-    await Future.delayed(const Duration(milliseconds: 300));
-    // ここは演出用のリアルな乱数（本来はAnalyserNodeから取得）
-    final jitter = 0.6 + (math.Random().nextDouble() * 0.3);
-    _addLog('JITTER = ${jitter.toStringAsFixed(4)}');
-    
-    _addLog('ANALYZING VOCAL DOMINANCE...');
-    await Future.delayed(const Duration(milliseconds: 300));
-    final dom = 0.1 + (math.Random().nextDouble() * 0.2);
-    _addLog('DOMINANCE = ${dom.toStringAsFixed(4)}');
-    
-    await Future.delayed(const Duration(milliseconds: 300));
-    _addLog('ACOUSTIC PROFILE LOCKED.');
-    _addLog('ROUTING TO TEXT CONTEXT PROCESSOR...');
-    
+    // 音声が途切れて確定テキストがある場合は自動遷移
+    if (!s.recording && s.transcript.isNotEmpty) {
+      _finish(s.transcript);
+    }
+  }
+
+  void _finish(String text) {
+    if (_done) return;
+    _done = true;
+    _pollTimer?.cancel();
+    _audio.stopScan();
     HapticFeedback.heavyImpact();
-    await Future.delayed(const Duration(milliseconds: 800));
-    
     if (mounted) {
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (_) => WizardScreen(initialText: _transcribedText.isNotEmpty ? _transcribedText : null)),
+        MaterialPageRoute(
+          builder: (_) => WizardScreen(initialText: text.isNotEmpty ? text : null),
+        ),
       );
     }
   }
 
-  void _addLog(String log) {
-    if (!mounted) return;
-    setState(() {
-      _logs.add('> $log');
-      _logStep++;
-    });
-    HapticFeedback.mediumImpact();
-  }
-
   @override
   void dispose() {
-    _waveController.dispose();
+    _pollTimer?.cancel();
+    _audio.stopScan();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
+    final s = _audioState;
+    final spectrum = s.spectrum.isEmpty ? List.filled(16, 0) : s.spectrum;
+    final hasVoice = s.rms > 5;
+
     return Scaffold(
       backgroundColor: AppTheme.background,
       body: SafeArea(
         child: Padding(
-          padding: const EdgeInsets.all(24.0),
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              // ── ヘッダー ────────────────────────────────────────
+              Row(
+                children: [
+                  Container(
+                    width: 8, height: 8,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: s.recording ? const Color(0xFF00FF00) : Colors.grey,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    s.recording ? 'REC  LISTENING...' : 'STANDBY',
+                    style: const TextStyle(
+                      color: Color(0xFF00FF00), fontSize: 12,
+                      fontFamily: 'monospace', letterSpacing: 2,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 24),
+
+              // ── リアルFFTスペクトラム（本物のWeb Audio AnalyserNodeデータ）──
               const Text(
-                'ACOUSTIC_SCANNER_v2.1',
-                style: TextStyle(color: Color(0xFF00FFFF), fontSize: 14, fontWeight: FontWeight.bold, letterSpacing: 2),
+                'SPECTRUM ANALYSER  [real FFT / 16 bands]',
+                style: TextStyle(color: Colors.white38, fontSize: 10, fontFamily: 'monospace'),
               ),
-              const SizedBox(height: 40),
-              
-              // 擬似的なオシロスコープ波形
-              Center(
-                child: Container(
-                  height: 150,
-                  width: double.infinity,
-                  decoration: BoxDecoration(
-                    border: Border.all(color: const Color(0xFF00FFFF).withOpacity(0.3)),
-                    color: const Color(0xFF00FFFF).withOpacity(0.05),
-                  ),
-                  child: AnimatedBuilder(
-                    animation: _waveController,
-                    builder: (context, child) {
-                      return CustomPaint(
-                        painter: WavePainter(_waveController.value, _logStep),
-                      );
-                    },
-                  ),
-                ),
-              ),
-              
-              const SizedBox(height: 20),
-              const Center(
-                child: Text(
-                  'PLEASE SPEAK YOUR SITUATION ALOUD\n(状況を声に出してください)',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(color: Colors.white54, fontSize: 12),
-                ),
-              ),
-              
-              const SizedBox(height: 40),
-              
-              // ターミナルログ
-              Expanded(
-                child: ListView.builder(
-                  itemCount: _logs.length,
-                  itemBuilder: (context, index) {
-                    return Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 4),
-                      child: Text(
-                        _logs[index],
-                        style: const TextStyle(
-                          color: Color(0xFF00FF00),
-                          fontFamily: 'monospace',
-                          fontSize: 12,
+              const SizedBox(height: 8),
+              SizedBox(
+                height: 80,
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: List.generate(16, (i) {
+                    final v = spectrum[i].clamp(0, 255);
+                    final h = (v / 255.0) * 80;
+                    final color = Color.lerp(
+                      const Color(0xFF00FFFF),
+                      const Color(0xFF00FF00),
+                      i / 15.0,
+                    )!;
+                    return Expanded(
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 1),
+                        child: AnimatedContainer(
+                          duration: const Duration(milliseconds: 80),
+                          height: h.clamp(2, 80),
+                          decoration: BoxDecoration(
+                            color: color.withOpacity(0.85),
+                            borderRadius: BorderRadius.circular(2),
+                            boxShadow: hasVoice ? [BoxShadow(color: color.withOpacity(0.4), blurRadius: 4)] : null,
+                          ),
                         ),
                       ),
                     );
-                  },
+                  }),
+                ),
+              ),
+              const SizedBox(height: 20),
+
+              // ── リアル音声メトリクス ─────────────────────────────
+              Row(
+                children: [
+                  _MetricBox(label: 'RMS', value: '${s.rms}', unit: '/100', color: const Color(0xFF00FFFF)),
+                  const SizedBox(width: 12),
+                  _MetricBox(label: 'JITTER', value: '${s.jitter}', unit: 'ZCR%', color: const Color(0xFFFFD700)),
+                  const SizedBox(width: 12),
+                  _MetricBox(label: 'FREQ', value: '${s.dominantFreqHz}', unit: 'Hz', color: const Color(0xFFFF6B6B)),
+                ],
+              ),
+              const SizedBox(height: 24),
+
+              // ── リアルタイム文字起こし ───────────────────────────
+              const Text(
+                'TRANSCRIPTION',
+                style: TextStyle(color: Colors.white38, fontSize: 10, fontFamily: 'monospace'),
+              ),
+              const SizedBox(height: 8),
+              Expanded(
+                child: Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    border: Border.all(color: Colors.white12),
+                    borderRadius: BorderRadius.circular(4),
+                    color: Colors.white.withOpacity(0.03),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // 確定済みテキスト
+                      Text(
+                        s.transcript,
+                        style: const TextStyle(
+                          color: Colors.white, fontSize: 14,
+                          fontFamily: 'monospace', height: 1.6,
+                        ),
+                      ),
+                      // 認識中テキスト（薄い色でリアルタイム表示）
+                      if (s.interimTranscript.isNotEmpty)
+                        Text(
+                          s.interimTranscript,
+                          style: const TextStyle(
+                            color: Color(0xFF00FFFF), fontSize: 14,
+                            fontFamily: 'monospace', height: 1.6,
+                            fontStyle: FontStyle.italic,
+                          ),
+                        ),
+                      // プレースホルダー
+                      if (s.transcript.isEmpty && s.interimTranscript.isEmpty)
+                        const Text(
+                          '状況を声に出してください...',
+                          style: TextStyle(color: Colors.white24, fontSize: 13, fontFamily: 'monospace'),
+                        ),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: 20),
+
+              // ── 完了ボタン ──────────────────────────────────────
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: () => _finish(s.fullTranscript),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF00FFFF),
+                    foregroundColor: Colors.black,
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
+                  ),
+                  child: const Text(
+                    'ANALYSIS START  ▶',
+                    style: TextStyle(fontFamily: 'monospace', fontWeight: FontWeight.bold, letterSpacing: 2),
+                  ),
                 ),
               ),
             ],
@@ -162,35 +218,34 @@ class _VoiceScanScreenState extends State<VoiceScanScreen> with TickerProviderSt
   }
 }
 
-class WavePainter extends CustomPainter {
-  final double animationValue;
-  final int intensity;
+class _MetricBox extends StatelessWidget {
+  final String label;
+  final String value;
+  final String unit;
+  final Color color;
 
-  WavePainter(this.animationValue, this.intensity);
+  const _MetricBox({required this.label, required this.value, required this.unit, required this.color});
 
   @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = const Color(0xFF00FFFF)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 2;
-
-    final path = Path();
-    final midY = size.height / 2;
-    
-    // intensityに応じて波形の激しさが変わる
-    final amp = 10.0 + (intensity * 5.0);
-
-    path.moveTo(0, midY);
-    for (double i = 0; i < size.width; i++) {
-      final x = i;
-      final y = midY + math.sin((i / 20) + (animationValue * 2 * math.pi)) * amp * math.sin(i / size.width * math.pi);
-      path.lineTo(x, y);
-    }
-
-    canvas.drawPath(path, paint);
+  Widget build(BuildContext context) {
+    return Expanded(
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
+        decoration: BoxDecoration(
+          border: Border.all(color: color.withOpacity(0.4)),
+          borderRadius: BorderRadius.circular(4),
+          color: color.withOpacity(0.05),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(label, style: TextStyle(color: color.withOpacity(0.7), fontSize: 9, fontFamily: 'monospace', letterSpacing: 1)),
+            const SizedBox(height: 4),
+            Text(value, style: TextStyle(color: color, fontSize: 20, fontFamily: 'monospace', fontWeight: FontWeight.bold)),
+            Text(unit, style: TextStyle(color: color.withOpacity(0.5), fontSize: 9, fontFamily: 'monospace')),
+          ],
+        ),
+      ),
+    );
   }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => true;
 }
