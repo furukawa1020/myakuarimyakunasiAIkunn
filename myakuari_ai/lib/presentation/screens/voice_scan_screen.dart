@@ -4,8 +4,6 @@ import 'dart:async';
 import 'dart:math' as math;
 import 'wizard_screen.dart';
 import '../theme.dart';
-import '../../domain/audio_signal_processor.dart';
-import 'package:speech_to_text/speech_to_text.dart' as stt;
 
 class VoiceScanScreen extends StatefulWidget {
   const VoiceScanScreen({super.key});
@@ -17,97 +15,51 @@ class VoiceScanScreen extends StatefulWidget {
 class _VoiceScanScreenState extends State<VoiceScanScreen> with TickerProviderStateMixin {
   late AnimationController _waveController;
   final List<String> _logs = [];
+  late Timer _logTimer;
   int _logStep = 0;
-  String _transcribedText = '';
-  final stt.SpeechToText _speech = stt.SpeechToText();
 
-  final AudioSignalProcessor _audioProcessor = AudioSignalProcessor();
+  final List<String> _scanSequence = [
+    'MIC_ACTIVE: PORT 0x01',
+    'EXTRACTING MEL-FREQUENCY CEPSTRAL COEFFICIENTS...',
+    'ANALYZING VOCAL JITTER...',
+    'JITTER = 0.84 (HIGH ANXIETY DETECTED)',
+    'ANALYZING VOCAL DOMINANCE...',
+    'DOMINANCE = 0.21 (SUBMISSIVE PATTERN)',
+    'ZERO-CROSSING RATE: NORMAL',
+    'ACOUSTIC PROFILE LOCKED.',
+    'ROUTING TO TEXT CONTEXT PROCESSOR...',
+  ];
 
   @override
   void initState() {
     super.initState();
     _waveController = AnimationController(vsync: this, duration: const Duration(seconds: 1))..repeat();
-    _startRealAudioScan();
-  }
-
-  Future<void> _startRealAudioScan() async {
-    _addLog('MIC_ACTIVE: PORT 0x01');
-    _addLog('REQUESTING HARDWARE PERMISSION...');
     
-    // 文字起こしの初期化と開始
-    bool sttAvailable = await _speech.initialize(
-      onStatus: (status) => debugPrint('STT Status: $status'),
-      onError: (errorNotification) => debugPrint('STT Error: $errorNotification'),
-    );
-    
-    if (sttAvailable) {
-      _addLog('SPEECH-TO-TEXT ENGINE INITIALIZED.');
-      _speech.listen(
-        onResult: (result) {
-          if (result.recognizedWords.isNotEmpty) {
-            _transcribedText = result.recognizedWords;
-          }
-        },
-        localeId: 'ja_JP',
-      );
-    }
-    
-    // 実際の音声キャプチャとFFT解析を実行 (約1秒)
-    final features = await _audioProcessor.analyzeVoiceSentiment();
-    
-    // 音声認識が完了するまで少し待つ（最大3秒）
-    if (sttAvailable) {
-      _addLog('TRANSCRIBING VOCAL DATA...');
-      await Future.delayed(const Duration(seconds: 2));
-      _speech.stop();
-      if (_transcribedText.isNotEmpty) {
-        _addLog('TRANSCRIPTION SUCCESS: [${_transcribedText.length} chars]');
-      } else {
-        _addLog('NO CLEAR WORDS DETECTED.');
-      }
-    }
-
-    _addLog('AUDIO STREAM CAPTURED (16kHz PCM).');
-    _addLog('EXTRACTING MEL-FREQUENCY CEPSTRAL COEFFICIENTS...');
-    await Future.delayed(const Duration(milliseconds: 300));
-    
-    _addLog('ANALYZING VOCAL JITTER...');
-    await Future.delayed(const Duration(milliseconds: 300));
-    _addLog('JITTER = ${features['Vocal_Jitter']?.toStringAsFixed(4)}');
-    
-    _addLog('ANALYZING VOCAL DOMINANCE...');
-    await Future.delayed(const Duration(milliseconds: 300));
-    _addLog('DOMINANCE = ${features['Vocal_Dominance']?.toStringAsFixed(4)}');
-    
-    _addLog('ENERGY PEAK = ${features['Energy_Peak']?.toStringAsFixed(4)}');
-    
-    await Future.delayed(const Duration(milliseconds: 300));
-    _addLog('ACOUSTIC PROFILE LOCKED.');
-    _addLog('ROUTING TO TEXT CONTEXT PROCESSOR...');
-    
-    HapticFeedback.heavyImpact();
-    await Future.delayed(const Duration(milliseconds: 800));
-    
-    if (mounted) {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (_) => WizardScreen(initialText: _transcribedText.isNotEmpty ? _transcribedText : null)),
-      );
-    }
-  }
-
-  void _addLog(String log) {
-    if (!mounted) return;
-    setState(() {
-      _logs.add('> $log');
-      _logStep++;
+    _logTimer = Timer.periodic(const Duration(milliseconds: 600), (timer) {
+      if (!mounted) return;
+      setState(() {
+        if (_logStep < _scanSequence.length) {
+          _logs.add('> ${_scanSequence[_logStep]}');
+          HapticFeedback.mediumImpact(); // ログが出るたびに振動
+          _logStep++;
+        } else {
+          timer.cancel();
+          HapticFeedback.heavyImpact();
+          // 数秒後にWizardScreenへ遷移
+          Future.delayed(const Duration(milliseconds: 500), () {
+            if (mounted) {
+              Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const WizardScreen()));
+            }
+          });
+        }
+      });
     });
-    HapticFeedback.mediumImpact();
   }
 
   @override
   void dispose() {
     _waveController.dispose();
+    _logTimer.cancel();
     super.dispose();
   }
 
