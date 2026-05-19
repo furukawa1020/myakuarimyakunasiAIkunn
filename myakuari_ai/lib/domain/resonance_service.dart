@@ -1,11 +1,11 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 
-// ────────────────────────────────────────────────────────────────
-// デプロイ後にあなたのWorker URLに書き換えてください
-// wrangler deploy で取得できます
-// ────────────────────────────────────────────────────────────────
-const String _workerBaseUrl = 'https://myakuari-ogp-generator.YOUR_SUBDOMAIN.workers.dev';
+import 'package:flutter/foundation.dart';
+
+final String _workerBaseUrl = kDebugMode 
+    ? 'http://localhost:8787' 
+    : 'https://myakuari-ogp-generator.myakuarimyakunasiaikunn.workers.dev';
 
 class ResonanceMatch {
   final String userId;

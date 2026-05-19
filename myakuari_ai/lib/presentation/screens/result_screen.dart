@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter/foundation.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../domain/models/inference_models.dart';
 import '../widgets/character_view.dart';
@@ -64,9 +65,9 @@ class _ResultScreenState extends State<ResultScreen> {
 
   Future<void> _captureAndShare() async {
     try {
-      // Cloudflare WorkerのURLを構築
-      // ※実際にはデプロイしたWorkerのURLに書き換えてください
-      final workerUrl = 'https://myakuari-ogp.your-worker-subdomain.workers.dev';
+      final workerUrl = kDebugMode
+          ? 'http://localhost:8787'
+          : 'https://myakuari-ogp-generator.myakuarimyakunasiaikunn.workers.dev';
       final shareUrl = '$workerUrl?score=$_simulatedScore&label=${Uri.encodeComponent(widget.result.labelText)}';
       final text = '【恋愛診断AI君: SYSTEM_DIAGNOSTICS】\n私の絶望スコアは ${_simulatedScore}% でした。\n\n詳細な分析結果はこちら:\n$shareUrl\n\n#恋愛診断AI君 #ずんだもん #EdgeTransformer';
       
