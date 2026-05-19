@@ -76,6 +76,8 @@ const RESOURCES = {"assets/AssetManifest.bin": "408874def34ffb06568ac39f5841018b
 "assets/fonts/MaterialIcons-Regular.otf": "371a1773f7f523fbbe4267fa0e2fa680",
 "assets/NOTICES": "bc451d6c6866b9e912d81997247755b1",
 "assets/packages/cupertino_icons/assets/CupertinoIcons.ttf": "33b7d9392238c04c131b6ce224e13711",
+"assets/packages/record_web/assets/js/record.fixwebmduration.js": "1f0108ea80c8951ba702ced40cf8cdce",
+"assets/packages/record_web/assets/js/record.worklet.js": "6d247986689d283b7e45ccdf7214c2ff",
 "assets/shaders/ink_sparkle.frag": "ecc85a2e95f5e9f53123dcaf8cb9b6ce",
 "assets/shaders/stretch_effect.frag": "40d68efbbf360632f614c731219e95f0",
 "canvaskit/canvaskit.js": "8331fe38e66b3a898c4f37648aaf7ee2",
