@@ -81,6 +81,8 @@ class MLInferenceEngine {
         counterfactuals: cfs,
         nextActions: actions,
         spokenScript: script,
+        attentionMap: {},
+        featureImportance: {},
         deepAnalysis: null,
       );
     } catch (_) {

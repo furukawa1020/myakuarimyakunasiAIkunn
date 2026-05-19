@@ -98,6 +98,8 @@ class RubyInferenceEngine {
         counterfactuals: [],
         nextActions: ['Rubyエンジン駆動中'],
         spokenScript: 'Rubyエンジンによる日本版チューニング済みの結果なのだ！　' + (data['details'] as List).join(' '),
+        attentionMap: {},
+        featureImportance: {},
         deepAnalysis: data['deep_analysis']?.toString(),
         isIkikoku: data['is_ikikoku'] == true,
         ikikokuWarning: data['ikikoku_warning']?.toString(),
