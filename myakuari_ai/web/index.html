@@ -22,24 +22,45 @@
   <title>脈アリ！？脈ナシ！？教えて！AI君</title>
   <link rel="manifest" href="manifest.json">
   <script>
-    // 古い Service Worker の登録解除とキャッシュの全クリアを強制し、最新の日本語版を即時読み込ませる
-    if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.getRegistrations().then(function(registrations) {
-        for (var i = 0; i < registrations.length; i++) {
-          registrations[i].unregister().then(function() {
-            console.log('[CacheBuster] ServiceWorker unregistered.');
+    // 古い Service Worker の登録解除とキャッシュの全クリアを強制し、即時リロードして最新の日本語版を読み込ませる
+    (function() {
+      var hasSW = false;
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.getRegistrations().then(function(registrations) {
+          if (registrations && registrations.length > 0) {
+            hasSW = true;
+            console.log('[CacheBuster] Found ' + registrations.length + ' ServiceWorkers. Unregistering...');
+            var promises = [];
+            for (var i = 0; i < registrations.length; i++) {
+              promises.push(registrations[i].unregister());
+            }
+            Promise.all(promises).then(function() {
+              console.log('[CacheBuster] ServiceWorkers unregistered.');
+              clearCachesAndReload();
+            });
+          } else {
+            console.log('[CacheBuster] No ServiceWorkers registered.');
+          }
+        });
+      }
+
+      function clearCachesAndReload() {
+        if ('caches' in window) {
+          caches.keys().then(function(names) {
+            var promises = [];
+            for (var i = 0; i < names.length; i++) {
+              promises.push(caches.delete(names[i]));
+            }
+            Promise.all(promises).then(function() {
+              console.log('[CacheBuster] All caches cleared. Reloading page...');
+              window.location.reload();
+            });
           });
+        } else {
+          window.location.reload();
         }
-      });
-    }
-    if ('caches' in window) {
-      caches.keys().then(function(names) {
-        for (var i = 0; i < names.length; i++) {
-          caches.delete(names[i]);
-          console.log('[CacheBuster] Cache cleared:', names[i]);
-        }
-      });
-    }
+      }
+    })();
   </script>
 </head>
 <body>
