@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'wizard_screen.dart';
 import 'history_screen.dart';
+import 'voice_scan_screen.dart';
 import 'settings_screen.dart';
 import 'about_screen.dart';
 import '../widgets/character_view.dart';
@@ -132,13 +133,7 @@ class HomeScreen extends StatelessWidget {
                         child: OutlinedButton(
                           onPressed: () {
                             HapticFeedback.vibrate();
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text('MIC_ACTIVE: 分析周波数帯を拡張中...', style: TextStyle(fontFamily: 'monospace')),
-                                backgroundColor: Color(0xFF00FFFF),
-                              )
-                            );
-                            // TODO: 実際のAudioSignalProcessor呼び出しと推論へのブリッジ
+                            Navigator.push(context, MaterialPageRoute(builder: (_) => const VoiceScanScreen()));
                           },
                           style: OutlinedButton.styleFrom(
                             side: const BorderSide(color: Color(0xFF00FFFF)),
