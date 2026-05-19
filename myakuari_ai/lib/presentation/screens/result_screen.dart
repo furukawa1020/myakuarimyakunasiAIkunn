@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../domain/models/inference_models.dart';
 import '../widgets/character_view.dart';
+import '../widgets/radar_chart.dart';
 import '../theme.dart';
 import '../../domain/bundled_voice_service.dart';
 import '../../domain/gemma_service.dart';
@@ -24,9 +25,15 @@ class _ResultScreenState extends State<ResultScreen> {
   bool _isGenerating = false;
   final GlobalKey _shareKey = GlobalKey();
 
+  // シミュレーション用のステート
+  late int _simulatedScore;
+  late Map<String, double> _simulatedRadar;
+
   @override
   void initState() {
     super.initState();
+    _simulatedScore = widget.result.loveScore;
+    _simulatedRadar = Map.from(widget.result.radarData);
     _playVoice();
     _startDeepAnalysis();
   }
@@ -54,13 +61,12 @@ class _ResultScreenState extends State<ResultScreen> {
 
   Future<void> _captureAndShare() async {
     try {
-      RenderRepaintBoundary boundary = _shareKey.currentContext!.findRenderObject() as RenderRepaintBoundary;
-      ui.Image image = await boundary.toImage(pixelRatio: 3.0);
-      ByteData? byteData = await image.toByteData(format: ui.ImageByteFormat.png);
-      Uint8List pngBytes = byteData!.buffer.asUint8List();
-
-      final xFile = XFile.fromData(pngBytes, mimeType: 'image/png', name: 'diagnosis_report.png');
-      await Share.shareXFiles([xFile], text: '【恋愛診断AI君: SYSTEM_DIAGNOSTICS】\nスコア: ${widget.result.loveScore}\n判定: ${widget.result.labelText}\n#恋愛診断AI君 #ずんだもん');
+      // Cloudflare WorkerのURLを構築
+      // ※実際にはデプロイしたWorkerのURLに書き換えてください
+      final workerUrl = 'https://myakuari-ogp.your-worker-subdomain.workers.dev';
+      final shareUrl = '$workerUrl?score=$_simulatedScore&label=${Uri.encodeComponent(widget.result.labelText)}';
+      
+      await Share.share('【恋愛診断AI君: SYSTEM_DIAGNOSTICS】\n私の絶望スコアは ${_simulatedScore}% でした。\n\n詳細な分析結果はこちら:\n$shareUrl\n#恋愛診断AI君 #ずんだもん #EdgeTransformer');
     } catch (e) {
       debugPrint('Share Error: $e');
     }
@@ -73,23 +79,38 @@ class _ResultScreenState extends State<ResultScreen> {
 
     return Scaffold(
       backgroundColor: AppTheme.background,
-      body: RepaintBoundary(
-        key: _shareKey,
-        child: SingleChildScrollView(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _buildAppBar(systemColor),
-              _buildDiagnosticsSummary(systemColor),
-              _buildTransformerStatus(systemColor),
-              _buildAttentionHeatmap(systemColor),
-              _buildFeatureImportanceMap(systemColor),
-              _buildDialoguePanel(charState, systemColor),
-              _buildStrategyLogs(systemColor),
-              const SizedBox(height: 40),
-            ],
+      body: Stack(
+        children: [
+          Positioned.fill(
+            child: Opacity(
+              opacity: 0.1,
+              child: Image.asset('assets/images/grid_bg.png', repeat: ImageRepeat.repeat),
+            ),
           ),
-        ),
+          RepaintBoundary(
+            key: _shareKey,
+            child: SingleChildScrollView(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _buildAppBar(systemColor),
+                  _buildDiagnosticsSummary(systemColor),
+                  _buildRadarAndVisuals(systemColor),
+                  _buildSimulationPanel(systemColor),
+                  _buildAttentionHeatmap(systemColor),
+                  _buildDialoguePanel(charState, systemColor),
+                  const SizedBox(height: 80),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: _captureAndShare,
+        backgroundColor: systemColor.withOpacity(0.2),
+        icon: Icon(Icons.share, color: systemColor),
+        label: Text('SHARE_REPORT', style: TextStyle(color: systemColor)),
       ),
     );
   }
@@ -113,7 +134,10 @@ class _ResultScreenState extends State<ResultScreen> {
       margin: const EdgeInsets.symmetric(horizontal: 20),
       decoration: BoxDecoration(
         color: color.withOpacity(0.05),
-        border: Border.all(color: color.withOpacity(0.3)),
+        border: Border.all(color: color.withOpacity(0.3), width: 2),
+        boxShadow: [
+          BoxShadow(color: color.withOpacity(0.1), blurRadius: 10, spreadRadius: 2),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -126,13 +150,14 @@ class _ResultScreenState extends State<ResultScreen> {
             children: [
               Expanded(
                 child: LinearProgressIndicator(
-                  value: widget.result.loveScore / 100,
+                  value: _simulatedScore / 100,
                   backgroundColor: Colors.white12,
                   color: color,
+                  minHeight: 8,
                 ),
               ),
               const SizedBox(width: 16),
-              Text('${widget.result.loveScore}%', style: TextStyle(color: color, fontSize: 24, fontWeight: FontWeight.bold)),
+              Text('${_simulatedScore}%', style: TextStyle(color: color, fontSize: 28, fontWeight: FontWeight.bold)),
             ],
           ),
           const SizedBox(height: 8),
@@ -142,22 +167,93 @@ class _ResultScreenState extends State<ResultScreen> {
     );
   }
 
-  Widget _buildTransformerStatus(Color color) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+  Widget _buildRadarAndVisuals(Color color) {
+    return Padding(
+      padding: const EdgeInsets.all(20),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(Icons.memory, size: 14, color: color),
-          const SizedBox(width: 8),
-          Text('ENGINE: EDGE-TRANSFORMER-V2.0 | ATTENTION_HEADS: 8 | LAYERS: 6', 
-            style: TextStyle(color: color.withOpacity(0.6), fontSize: 9)),
+          Expanded(
+            flex: 1,
+            child: Container(
+              height: 200,
+              decoration: BoxDecoration(
+                border: Border.all(color: color.withOpacity(0.2)),
+                color: Colors.black45,
+              ),
+              child: RadarChartWidget(
+                values: _simulatedRadar,
+                color: color,
+              ),
+            ),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            flex: 1,
+            child: _buildFeatureImportanceMap(color),
+          ),
         ],
       ),
     );
   }
 
+  Widget _buildSimulationPanel(Color color) {
+    return Container(
+      padding: const EdgeInsets.all(24),
+      margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+      decoration: BoxDecoration(
+        border: Border.all(color: const Color(0xFF00FFFF).withOpacity(0.3)),
+        color: const Color(0xFF00FFFF).withOpacity(0.05),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(Icons.tune, color: Color(0xFF00FFFF), size: 16),
+              const SizedBox(width: 8),
+              const Text('WHAT-IF SIMULATION ENGINE', style: TextStyle(color: Color(0xFF00FFFF), fontSize: 12, fontWeight: FontWeight.bold)),
+            ],
+          ),
+          const SizedBox(height: 16),
+          const Text('「もしあの時こうしていたら？」パラメータを操作して未来を再計算するのだ。', style: TextStyle(color: Colors.white70, fontSize: 12)),
+          const SizedBox(height: 16),
+          _buildSimSlider('アプローチ積極性 (Initiative)', '魅力', const Color(0xFF00FFFF)),
+          _buildSimSlider('連絡頻度 (Frequency)', '楽しさ', const Color(0xFF00FFFF)),
+          _buildSimSlider('声の自信 (Vocal Dominance)', '誠実', const Color(0xFF00FFFF)),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSimSlider(String label, String radarKey, Color color) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(label, style: const TextStyle(color: Colors.white54, fontSize: 10)),
+        Slider(
+          value: _simulatedRadar[radarKey] ?? 0.5,
+          min: 0.1,
+          max: 1.0,
+          activeColor: color,
+          inactiveColor: color.withOpacity(0.2),
+          onChanged: (val) {
+            setState(() {
+              _simulatedRadar[radarKey] = val;
+              // 簡易的なスコア再計算ロジック（本来はEdge-Transformerの再推論を叩く）
+              double avg = _simulatedRadar.values.reduce((a, b) => a + b) / _simulatedRadar.length;
+              _simulatedScore = (avg * 100).toInt().clamp(0, 100);
+            });
+          },
+        ),
+      ],
+    );
+  }
+
   Widget _buildAttentionHeatmap(Color color) {
     final keys = widget.result.attentionMap.keys.toList();
+    if (keys.isEmpty) return const SizedBox.shrink();
+    
     return Container(
       padding: const EdgeInsets.all(24),
       margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
@@ -205,41 +301,34 @@ class _ResultScreenState extends State<ResultScreen> {
   }
 
   Widget _buildFeatureImportanceMap(Color color) {
-    return Container(
-      padding: const EdgeInsets.all(24),
-      margin: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        border: Border.all(color: Colors.white12),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text('NEURAL_FEATURE_CONTRIBUTION (SHAP_VALUES)', style: TextStyle(color: Colors.white70, fontSize: 12)),
-          const SizedBox(height: 20),
-          ...widget.result.featureImportance.entries.map((e) => Padding(
-            padding: const EdgeInsets.only(bottom: 12),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(e.key, style: const TextStyle(fontSize: 12)),
-                    Text('+${e.value.toStringAsFixed(1)}', style: TextStyle(color: color, fontSize: 10)),
-                  ],
-                ),
-                const SizedBox(height: 4),
-                LinearProgressIndicator(
-                  value: e.value / 25,
-                  backgroundColor: Colors.white12,
-                  color: color.withOpacity(0.6),
-                  minHeight: 2,
-                ),
-              ],
-            ),
-          )),
-        ],
-      ),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text('SHAP_VALUES', style: TextStyle(color: Colors.white70, fontSize: 10)),
+        const SizedBox(height: 12),
+        ...widget.result.featureImportance.entries.take(4).map((e) => Padding(
+          padding: const EdgeInsets.only(bottom: 8),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(e.key, style: const TextStyle(fontSize: 10), overflow: TextOverflow.ellipsis),
+                  Text('+${e.value.toStringAsFixed(1)}', style: TextStyle(color: color, fontSize: 10)),
+                ],
+              ),
+              const SizedBox(height: 4),
+              LinearProgressIndicator(
+                value: e.value / 25,
+                backgroundColor: Colors.white12,
+                color: color.withOpacity(0.6),
+                minHeight: 2,
+              ),
+            ],
+          ),
+        )),
+      ],
     );
   }
 
@@ -261,41 +350,14 @@ class _ResultScreenState extends State<ResultScreen> {
               decoration: BoxDecoration(
                 color: Colors.white.withOpacity(0.05),
                 borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: Colors.white12),
               ),
               child: Text(
                 _deepAnalysis ?? 'DECRYPTING_SIGNAL...',
-                style: GoogleFonts.notoSansJp(fontSize: 14, height: 1.6),
+                style: GoogleFonts.notoSansJp(fontSize: 13, height: 1.6),
               ),
             ),
           ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildStrategyLogs(Color color) {
-    return Container(
-      padding: const EdgeInsets.all(24),
-      margin: const EdgeInsets.symmetric(horizontal: 20),
-      decoration: BoxDecoration(
-        border: Border.all(color: color.withOpacity(0.2)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text('MITIGATION_STRATEGY_SEQUENCE', style: TextStyle(color: color, fontSize: 12, letterSpacing: 1)),
-          const SizedBox(height: 16),
-          ...widget.result.nextActions.map((action) => Padding(
-            padding: const EdgeInsets.only(bottom: 8),
-            child: Text('> EXECUTE: $action', style: const TextStyle(color: Colors.white, fontSize: 14)),
-          )),
-          if (widget.result.ikikokuWarning != null)
-            Container(
-              margin: const EdgeInsets.only(top: 16),
-              padding: const EdgeInsets.all(12),
-              color: AppTheme.alertRed.withOpacity(0.2),
-              child: Text(widget.result.ikikokuWarning!, style: const TextStyle(color: AppTheme.alertRed, fontSize: 12)),
-            ),
         ],
       ),
     );

@@ -1,0 +1,6 @@
+name = "myakuari-ogp-generator"
+main = "src/index.js"
+compatibility_date = "2024-05-19"
+
+[build]
+command = "npm install"
