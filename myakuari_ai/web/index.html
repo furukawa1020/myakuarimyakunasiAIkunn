@@ -21,6 +21,26 @@
   <meta name="twitter:image" content="https://your-domain.com/icons/Icon-512.png">
   <title>脈アリ！？脈ナシ！？教えて！AI君</title>
   <link rel="manifest" href="manifest.json">
+  <script>
+    // 古い Service Worker の登録解除とキャッシュの全クリアを強制し、最新の日本語版を即時読み込ませる
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.getRegistrations().then(function(registrations) {
+        for (var i = 0; i < registrations.length; i++) {
+          registrations[i].unregister().then(function() {
+            console.log('[CacheBuster] ServiceWorker unregistered.');
+          });
+        }
+      });
+    }
+    if ('caches' in window) {
+      caches.keys().then(function(names) {
+        for (var i = 0; i < names.length; i++) {
+          caches.delete(names[i]);
+          console.log('[CacheBuster] Cache cleared:', names[i]);
+        }
+      });
+    }
+  </script>
 </head>
 <body>
   <!-- ================================================================
