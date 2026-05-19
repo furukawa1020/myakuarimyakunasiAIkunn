@@ -16,22 +16,9 @@ class VoiceScanScreen extends StatefulWidget {
 class _VoiceScanScreenState extends State<VoiceScanScreen> with TickerProviderStateMixin {
   late AnimationController _waveController;
   final List<String> _logs = [];
-  late Timer _logTimer;
   int _logStep = 0;
   String _transcribedText = '';
   final WebAudioInterop _audioInterop = WebAudioInterop();
-
-  final List<String> _scanSequence = [
-    'MIC_ACTIVE: PORT 0x01',
-    'EXTRACTING MEL-FREQUENCY CEPSTRAL COEFFICIENTS...',
-    'ANALYZING VOCAL JITTER...',
-    'JITTER = 0.84 (HIGH ANXIETY DETECTED)',
-    'ANALYZING VOCAL DOMINANCE...',
-    'DOMINANCE = 0.21 (SUBMISSIVE PATTERN)',
-    'ZERO-CROSSING RATE: NORMAL',
-    'ACOUSTIC PROFILE LOCKED.',
-    'ROUTING TO TEXT CONTEXT PROCESSOR...',
-  ];
 
   @override
   void initState() {

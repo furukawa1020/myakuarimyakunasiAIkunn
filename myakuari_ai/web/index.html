@@ -1,49 +1,78 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <!--
-    If you are serving your web app in a path other than the root, change the
-    href value below to reflect the base path you are serving from.
-
-    The path provided below has to start and end with a slash "/" in order for
-    it to work correctly.
-
-    For more details:
-    * https://developer.mozilla.org/en-US/docs/Web/HTML/Element/base
-
-    This is a placeholder for base href that will be replaced by the value of
-    the `--base-href` argument provided to `flutter build`.
-  -->
   <base href="/">
-
   <meta charset="UTF-8">
   <meta content="IE=Edge" http-equiv="X-UA-Compatible">
   <meta name="description" content="あなたの恋の脈あり・脈なしをAIが診断するのだ！">
-
-  <!-- iOS meta tags & icons -->
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black">
   <meta name="apple-mobile-web-app-title" content="AI君 - 恋愛診断AI">
   <link rel="apple-touch-icon" href="icons/Icon-192.png">
-
-  <!-- Favicon -->
   <link rel="icon" type="image/png" href="favicon.png"/>
-
-  <!-- OGP & Twitter Cards -->
   <meta property="og:title" content="AI君 - 恋愛診断AI">
   <meta property="og:description" content="あなたの恋の脈あり・脈なしをAIが診断するのだ！">
   <meta property="og:type" content="website">
-  <meta property="og:url" content="https://your-domain.com/"> <!-- 実際のドメインに変更してください -->
-  <meta property="og:image" content="https://your-domain.com/favicon.png"> <!-- 実際のドメインに変更してください -->
-  <meta name="twitter:card" content="summary">
+  <meta property="og:url" content="https://your-domain.com/">
+  <meta property="og:image" content="https://your-domain.com/icons/Icon-512.png">
+  <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="AI君 - 恋愛診断AI">
   <meta name="twitter:description" content="あなたの恋の脈あり・脈なしをAIが診断するのだ！">
-  <meta name="twitter:image" content="https://your-domain.com/favicon.png"> <!-- 実際のドメインに変更してください -->
-
+  <meta name="twitter:image" content="https://your-domain.com/icons/Icon-512.png">
   <title>AI君 - 恋愛診断AI</title>
   <link rel="manifest" href="manifest.json">
 </head>
 <body>
+  <!-- ================================================================
+       Web Speech API Bridge
+       FlutterのネイティブプラグインなしでブラウザのSpeech APIを使用。
+       window.startVoiceRecognition() / window.getVoiceResult() でアクセス。
+       ================================================================ -->
+  <script>
+    window._voiceResult = undefined;
+    window._voiceRecording = false;
+
+    window.startVoiceRecognition = function(timeoutMs) {
+      var SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+      if (!SR) { window._voiceResult = ''; return; }
+
+      var recognition = new SR();
+      recognition.lang = 'ja-JP';
+      recognition.interimResults = false;
+      recognition.maxAlternatives = 1;
+      recognition.continuous = false;
+
+      window._voiceResult = undefined;
+      window._voiceRecording = true;
+
+      recognition.onresult = function(e) {
+        window._voiceResult = e.results[0][0].transcript;
+        window._voiceRecording = false;
+      };
+      recognition.onerror = function(e) {
+        console.warn('Voice error:', e.error);
+        window._voiceResult = '';
+        window._voiceRecording = false;
+      };
+      recognition.onend = function() {
+        if (window._voiceResult === undefined) window._voiceResult = '';
+        window._voiceRecording = false;
+      };
+
+      try { recognition.start(); }
+      catch(e) { window._voiceResult = ''; window._voiceRecording = false; }
+
+      setTimeout(function() {
+        if (window._voiceResult === undefined) {
+          try { recognition.stop(); } catch(_) {}
+          window._voiceResult = '';
+        }
+      }, timeoutMs || 8000);
+    };
+
+    window.getVoiceResult = function() { return window._voiceResult; };
+    window.isVoiceRecording = function() { return window._voiceRecording; };
+  </script>
   <script src="flutter_bootstrap.js" async></script>
 </body>
 </html>

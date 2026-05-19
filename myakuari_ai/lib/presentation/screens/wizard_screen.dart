@@ -51,8 +51,17 @@ class _WizardScreenState extends State<WizardScreen> {
   @override
   void initState() {
     super.initState();
-    if (widget.initialText != null) {
+    if (widget.initialText != null && widget.initialText!.isNotEmpty) {
       _whatController.text = widget.initialText!;
+      // 音声で喋った内容は自動的に「What」ページに入力済みにし、次のページへ自動遷移
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        Future.delayed(const Duration(milliseconds: 500), () {
+          if (mounted) {
+            _pageController.jumpToPage(2); // Whatをスキップして「When」へ
+            setState(() => _currentPage = 2);
+          }
+        });
+      });
     }
     _initTts();
   }

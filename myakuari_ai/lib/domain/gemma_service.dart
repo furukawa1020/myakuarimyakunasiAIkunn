@@ -1,32 +1,25 @@
 import 'models/inference_models.dart';
+import 'neural_narrative_engine.dart';
 
-/// FlutterGemma を使ったオンデバイス LLM 制御クラス (Web用にスタブ化)
+/// GemmaServiceのWeb対応版。
+/// APIキー不要・ローカル完全実行。
+/// NeuralNarrativeEngine（Pure Dart MLP）を使い、MLモデルの
+/// 特徴ベクトルをニューラルネットで処理してテキストを生成する。
 class GemmaService {
   static final GemmaService _instance = GemmaService._internal();
   factory GemmaService() => _instance;
   GemmaService._internal();
 
-  bool _initialized = false;
-
-  Future<void> initialize() async {
-    if (_initialized) return;
-    try {
-      _initialized = true;
-    } catch (e) {
-      print('Gemma initialization failed: $e');
-      _initialized = false;
-    }
-  }
-
+  final bool _initialized = true;
   bool get isReady => _initialized;
+  Future<void> initialize() async {}
 
-  Future<String> generateDeepAnalysis(InferenceInput input, int score, String label) async {
-    if (!_initialized) return 'AI準備中なのだ...、今は手動解析に切り替えるのだ。';
-    
-    try {
-      return 'Web版では生成AIは使えないのだ！でも君の恋は応援してるのだ！';
-    } catch (e) {
-      return 'AIが照れてるみたいで、今は解析できないのだ。エラー: $e';
-    }
+  Future<String> generateDeepAnalysis(
+      InferenceInput input, int score, String label) async {
+    // MLP推論（ローカル・APIキー不要）
+    // 10次元特徴ベクトル → 16→8→4ニューロン → softmax → テキスト選択
+    await Future.delayed(const Duration(milliseconds: 600)); // 推論演出
+
+    return NeuralNarrativeEngine.generate(input, score);
   }
 }

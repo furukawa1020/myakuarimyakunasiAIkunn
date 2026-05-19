@@ -97,6 +97,7 @@ class _ResultScreenState extends State<ResultScreen> {
                   _buildAppBar(systemColor),
                   _buildDiagnosticsSummary(systemColor),
                   _buildRadarAndVisuals(systemColor),
+                  _buildNextActionsPanel(systemColor),
                   _buildSimulationPanel(systemColor),
                   _buildAttentionHeatmap(systemColor),
                   _buildDialoguePanel(charState, systemColor),
@@ -249,6 +250,53 @@ class _ResultScreenState extends State<ResultScreen> {
           },
         ),
       ],
+    );
+  }
+
+  Widget _buildNextActionsPanel(Color color) {
+    final actions = widget.result.nextActions;
+    if (actions.isEmpty) return const SizedBox.shrink();
+
+    final colors = [const Color(0xFF00FFFF), const Color(0xFFFF007F), Colors.orangeAccent];
+    final icons = [Icons.rocket_launch, Icons.visibility, Icons.exit_to_app];
+
+    return Container(
+      padding: const EdgeInsets.all(24),
+      margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+      decoration: BoxDecoration(
+        border: Border.all(color: color.withOpacity(0.5), width: 1.5),
+        color: color.withOpacity(0.05),
+        boxShadow: [BoxShadow(color: color.withOpacity(0.15), blurRadius: 12)],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.psychology, color: color, size: 16),
+              const SizedBox(width: 8),
+              Text('ACTION_PLANNER: 次の一手', style: TextStyle(color: color, fontSize: 12, fontWeight: FontWeight.bold, letterSpacing: 1.5)),
+            ],
+          ),
+          const SizedBox(height: 16),
+          ...actions.asMap().entries.map((e) => Padding(
+            padding: const EdgeInsets.only(bottom: 12),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Icon(icons[e.key % icons.length], color: colors[e.key % colors.length], size: 18),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    e.value,
+                    style: TextStyle(color: colors[e.key % colors.length], fontSize: 13, height: 1.5),
+                  ),
+                ),
+              ],
+            ),
+          )),
+        ],
+      ),
     );
   }
 
