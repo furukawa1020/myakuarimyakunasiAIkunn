@@ -61,25 +61,25 @@ class HomeScreen extends StatelessWidget {
                         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                         color: AppTheme.systemGreen,
                         child: const Text(
-                          'CORE_SYSTEM_ACTIVE',
+                          'システム稼働中',
                           style: TextStyle(color: Colors.black, fontSize: 10, fontWeight: FontWeight.bold),
                         ),
                       ),
                       const SizedBox(height: 12),
                       Text(
-                        'ANALYSIS_SIGNAL_0x7F',
+                        '恋愛波形解析エンジン',
                         style: TextStyle(
                           color: AppTheme.systemGreen.withOpacity(0.7),
                           fontSize: 14,
-                          letterSpacing: 4,
+                          letterSpacing: 2,
                         ),
                       ),
                       const SizedBox(height: 8),
                       Text(
-                        'HOPELESS\nENTROPY\nDETECTOR',
-                        style: GoogleFonts.shareTechMono(
-                          fontSize: 64,
-                          height: 0.9,
+                        '脈アリ！？\n脈ナシ！？\n教えて！AI君',
+                        style: GoogleFonts.dotGothic16(
+                          fontSize: 42,
+                          height: 1.1,
                           color: Colors.white,
                           fontWeight: FontWeight.bold,
                           shadows: [
@@ -104,8 +104,8 @@ class HomeScreen extends StatelessWidget {
                       color: AppTheme.systemGreen.withOpacity(0.05),
                     ),
                     child: const Text(
-                      'Target entity pulse detected. Analyzing frequency modulation and interpersonal data patterns. System ready for heuristic injection.',
-                      style: TextStyle(color: AppTheme.systemGreen, fontSize: 12, height: 1.5),
+                      '対象者のバイタルシグナルを検出しました。声の周波数変化と状況データを解析し、恋愛感情の脈あり度を予測します。システム待機中。',
+                      style: TextStyle(color: AppTheme.systemGreen, fontSize: 11, height: 1.5),
                     ),
                   ),
                 ),
@@ -124,7 +124,7 @@ class HomeScreen extends StatelessWidget {
                             HapticFeedback.heavyImpact();
                             Navigator.push(context, MaterialPageRoute(builder: (_) => const WizardScreen()));
                           },
-                          child: const Text('INITIALIZE_PROBE'),
+                          child: const Text('通常診断を開始する'),
                         ),
                       ),
                       const SizedBox(height: 12),
@@ -139,7 +139,7 @@ class HomeScreen extends StatelessWidget {
                             side: const BorderSide(color: Color(0xFF00FFFF)),
                             foregroundColor: const Color(0xFF00FFFF),
                           ),
-                          child: const Text('VOICE_OVERRIDE_SCAN (BETA)'),
+                          child: const Text('音声診断を開始する (声で入力)'),
                         ),
                       ),
                       const SizedBox(height: 20),
@@ -147,14 +147,14 @@ class HomeScreen extends StatelessWidget {
                         children: [
                           Expanded(
                             child: _SmallTerminalButton(
-                              label: 'HISTORY_LOG',
+                              label: '過去の診断記録',
                               onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const HistoryScreen())),
                             ),
                           ),
                           const SizedBox(width: 12),
                           Expanded(
                             child: _SmallTerminalButton(
-                              label: 'SYSTEM_CONFIG',
+                              label: 'システム設定',
                               onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const SettingsScreen())),
                             ),
                           ),

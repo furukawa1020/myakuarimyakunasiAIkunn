@@ -18,18 +18,16 @@ class _BrutalistSplashScreenState extends State<BrutalistSplashScreen> {
   int _step = 0;
 
   final List<String> _bootSequence = [
-    'INIT BIOS v2.0.4.5',
-    'CHECKING MEMORY... OK (ZERO-ALLOCATION POOL)',
-    'LOADING KERNEL... OK',
-    'MOUNTING VFS... OK',
-    'STARTING DSP ENGINE (FFT/MFCC)... OK',
-    'INITIALIZING EDGE-TRANSFORMER WEIGHTS...',
-    'QUANTIZATION: 4-bit NF4',
-    'ATTENTION HEADS: 8',
-    'LAYERS: 6',
-    'ESTABLISHING NEURO-SYMBOLIC CONSENSUS...',
-    'SYS_CHECK_PASS',
-    'BOOTING TERMINAL UI...',
+    'システム初期化中...',
+    'メモリチェック... 正常確認 (ゼロコピーバッファ)',
+    '推論カーネルロード完了',
+    '音声解析エンジン (FFT/リアルタイムスペクトラム) 起動',
+    'Edge-Transformer重みファイル展開中...',
+    '量子化形式: 4-bit NF4',
+    'アテンションヘッド数: 8',
+    'レイヤー数: 6',
+    '学習モデル重みの検証... 正常',
+    'ユーザーインターフェース起動中...',
   ];
 
   @override

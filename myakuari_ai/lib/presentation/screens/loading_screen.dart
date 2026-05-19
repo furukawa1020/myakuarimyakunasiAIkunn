@@ -17,7 +17,7 @@ class LoadingScreen extends StatefulWidget {
 }
 
 class _LoadingScreenState extends State<LoadingScreen> {
-  String _statusMessage = 'SIGNAL_DECRYPTING...';
+  String _statusMessage = '信号解読中...';
   double _progress = 0.0;
 
   @override
@@ -28,14 +28,14 @@ class _LoadingScreenState extends State<LoadingScreen> {
 
   Future<void> _processInference() async {
     await Future.delayed(const Duration(milliseconds: 500));
-    if (mounted) setState(() { _statusMessage = 'LOADING_NEURAL_WEIGHTS...'; _progress = 0.3; });
+    if (mounted) setState(() { _statusMessage = 'ニューラルモデル展開中...'; _progress = 0.3; });
     
     await MLInferenceEngine.instance.load();
 
-    if (mounted) setState(() { _statusMessage = 'EXTRACTING_FEATURE_VECTORS...'; _progress = 0.6; });
+    if (mounted) setState(() { _statusMessage = '特徴ベクトルの抽出中...'; _progress = 0.6; });
     await Future.delayed(const Duration(milliseconds: 600));
     
-    if (mounted) setState(() { _statusMessage = 'RUNNING_HYBRID_INFERENCE...'; _progress = 0.9; });
+    if (mounted) setState(() { _statusMessage = 'ハイブリッド診断実行中...'; _progress = 0.9; });
 
     final InferenceResult result = await InferenceEngine.analyze(widget.input);
 
@@ -75,7 +75,7 @@ class _LoadingScreenState extends State<LoadingScreen> {
                   const SizedBox(height: 12),
                   Text(
                     _statusMessage,
-                    style: GoogleFonts.shareTechMono(
+                    style: GoogleFonts.dotGothic16(
                       fontSize: 14, 
                       color: AppTheme.systemGreen,
                       letterSpacing: 1.2,

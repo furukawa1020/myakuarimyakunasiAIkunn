@@ -251,9 +251,9 @@ class _ResultScreenState extends State<ResultScreen> {
           const SizedBox(height: 16),
           const Text('「もしあの時こうしていたら？」パラメータを操作して未来を再計算するのだ。', style: TextStyle(color: Colors.white70, fontSize: 12)),
           const SizedBox(height: 16),
-          _buildSimSlider('アプローチ積極性 (Initiative)', '魅力', const Color(0xFF00FFFF)),
-          _buildSimSlider('連絡頻度 (Frequency)', '楽しさ', const Color(0xFF00FFFF)),
-          _buildSimSlider('声の自信 (Vocal Dominance)', '誠実', const Color(0xFF00FFFF)),
+          _buildSimSlider('アプローチの積極性', '魅力', const Color(0xFF00FFFF)),
+          _buildSimSlider('連絡の頻度', '楽しさ', const Color(0xFF00FFFF)),
+          _buildSimSlider('声の自信', '誠実', const Color(0xFF00FFFF)),
         ],
       ),
     );

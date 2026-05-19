@@ -86,7 +86,7 @@ class _VoiceScanScreenState extends State<VoiceScanScreen> {
                   ),
                   const SizedBox(width: 8),
                   Text(
-                    s.recording ? 'REC  LISTENING...' : 'STANDBY',
+                    s.recording ? 'マイク入力：認識中...' : '待機中',
                     style: const TextStyle(
                       color: Color(0xFF00FF00), fontSize: 12,
                       fontFamily: 'monospace', letterSpacing: 2,
@@ -98,7 +98,7 @@ class _VoiceScanScreenState extends State<VoiceScanScreen> {
 
               // ── リアルFFTスペクトラム（本物のWeb Audio AnalyserNodeデータ）──
               const Text(
-                'SPECTRUM ANALYSER  [real FFT / 16 bands]',
+                '周波数スペクトラム解析 (本物のマイク波形 / 16バンド)',
                 style: TextStyle(color: Colors.white38, fontSize: 10, fontFamily: 'monospace'),
               ),
               const SizedBox(height: 8),
@@ -136,18 +136,18 @@ class _VoiceScanScreenState extends State<VoiceScanScreen> {
               // ── リアル音声メトリクス ─────────────────────────────
               Row(
                 children: [
-                  _MetricBox(label: 'RMS', value: '${s.rms}', unit: '/100', color: const Color(0xFF00FFFF)),
+                  _MetricBox(label: '音量', value: '${s.rms}', unit: '/100', color: const Color(0xFF00FFFF)),
                   const SizedBox(width: 12),
-                  _MetricBox(label: 'JITTER', value: '${s.jitter}', unit: 'ZCR%', color: const Color(0xFFFFD700)),
+                  _MetricBox(label: '声の震え', value: '${s.jitter}', unit: 'ZCR%', color: const Color(0xFFFFD700)),
                   const SizedBox(width: 12),
-                  _MetricBox(label: 'FREQ', value: '${s.dominantFreqHz}', unit: 'Hz', color: const Color(0xFFFF6B6B)),
+                  _MetricBox(label: '基本周波数', value: '${s.dominantFreqHz}', unit: 'Hz', color: const Color(0xFFFF6B6B)),
                 ],
               ),
               const SizedBox(height: 24),
 
               // ── リアルタイム文字起こし ───────────────────────────
               const Text(
-                'TRANSCRIPTION',
+                'リアルタイム文字起こし結果',
                 style: TextStyle(color: Colors.white38, fontSize: 10, fontFamily: 'monospace'),
               ),
               const SizedBox(height: 8),
@@ -205,7 +205,7 @@ class _VoiceScanScreenState extends State<VoiceScanScreen> {
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
                   ),
                   child: const Text(
-                    'ANALYSIS START  ▶',
+                    '診断を開始する  ▶',
                     style: TextStyle(fontFamily: 'monospace', fontWeight: FontWeight.bold, letterSpacing: 2),
                   ),
                 ),

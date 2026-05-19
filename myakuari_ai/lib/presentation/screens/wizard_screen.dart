@@ -166,12 +166,12 @@ class _WizardScreenState extends State<WizardScreen> {
                     _speak(idx);
                   },
                     children: [
-                      _buildTextQuestion('Who', '相手は誰？関係性は？', '例: 職場の同僚でよく話す仲', _whoController),
-                      _buildTextQuestion('What', '何があったの？', '例: ランチに誘われた', _whatController),
-                      _buildChoiceQuestion('When', 'いつの事？', ['今日', '昨日', '今週', '先週', 'それ以前'], (val) => _when = val, _when),
-                      _buildChoiceQuestion('Where', 'どんな文脈？', ['対面', 'LINE', '通話', '飲み', '職場/学校', 'その他'], (val) => _where = val, _where),
-                      _buildTextQuestion('Why', 'どうしてそう思った？（自分の解釈）', '例: 普段誘ってこないのに珍しい', _whyController),
-                      _buildTextQuestion('How', 'どんな流れだった？', '例: 趣味の話から自然な流れで', _howController),
+                      _buildTextQuestion('相手', '相手は誰？関係性は？', '例: 職場の同僚でよく話す仲', _whoController),
+                      _buildTextQuestion('出来事', '何があったの？', '例: ランチに誘われた', _whatController),
+                      _buildChoiceQuestion('時期', 'いつの事？', ['今日', '昨日', '今週', '先週', 'それ以前'], (val) => _when = val, _when),
+                      _buildChoiceQuestion('媒体', 'どんな文脈？', ['対面', 'LINE', '通話', '飲み', '職場/学校', 'その他'], (val) => _where = val, _where),
+                      _buildTextQuestion('解釈', 'どうしてそう思った？（自分の解釈）', '例: 普段誘ってこないのに珍しい', _whyController),
+                      _buildTextQuestion('詳細', 'どんな流れだった？', '例: 趣味の話から自然な流れで', _howController),
                     ],
                   ),
                 ),
@@ -186,22 +186,22 @@ class _WizardScreenState extends State<WizardScreen> {
   Widget _buildTextQuestion(String title, String desc, String hint, TextEditingController controller) {
     // 系統別のサンプルテキスト
     final Map<String, Map<String, String>> sampleSets = {
-      'Who': {
+      '相手': {
         '脈あり': '職場の気になる同僚。最近毎日LINEしてる。',
         '脈なし': '三年前から知ってるただの男友達。',
         '絶妙': '大学の同期。最近よく目が合う気がする。',
       },
-      'What': {
+      '出来事': {
         '脈あり': '向こうから「二人で飲みに行かない？」って誘われた！',
         '脈なし': '「誰かいい人紹介してよ」と相談された。',
         '絶妙': '貸してた本を返すついでに、短時間のカフェに誘われた。',
       },
-      'Why': {
+      '解釈': {
         '脈あり': '目を見て話してくれるし、会話を広げようとしてくれる。',
         '脈なし': '完全に「良い友人」として信頼されている感じがする。',
         '絶妙': '態度は優しいけど、他の人にも同じように接している。',
       },
-      'How': {
+      '詳細': {
         '脈あり': '帰り道に二人きりになった時、少し照れながら。',
         '脈なし': '皆で飲んでる時に、あけすけに言われた。',
         '絶妙': 'LINEのやり取りの流れで、自然に決まった。',
@@ -239,7 +239,7 @@ class _WizardScreenState extends State<WizardScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(title, style: const TextStyle(color: Color(0xFF00FFFF), fontSize: 24, fontWeight: FontWeight.bold)),
+                Text(title, style: const TextStyle(color: Color(0xFF00FFFF), fontSize: 22, fontWeight: FontWeight.bold)),
                 const SizedBox(height: 12),
                 Text(desc, style: const TextStyle(fontSize: 18, color: Colors.white)),
                 const SizedBox(height: 24),
