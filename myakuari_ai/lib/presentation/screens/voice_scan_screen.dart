@@ -4,6 +4,7 @@ import 'dart:async';
 import 'dart:math' as math;
 import 'wizard_screen.dart';
 import '../theme.dart';
+import '../../domain/web_audio_interop.dart';
 
 class VoiceScanScreen extends StatefulWidget {
   const VoiceScanScreen({super.key});
@@ -17,6 +18,8 @@ class _VoiceScanScreenState extends State<VoiceScanScreen> with TickerProviderSt
   final List<String> _logs = [];
   late Timer _logTimer;
   int _logStep = 0;
+  String _transcribedText = '';
+  final WebAudioInterop _audioInterop = WebAudioInterop();
 
   final List<String> _scanSequence = [
     'MIC_ACTIVE: PORT 0x01',
@@ -34,32 +37,67 @@ class _VoiceScanScreenState extends State<VoiceScanScreen> with TickerProviderSt
   void initState() {
     super.initState();
     _waveController = AnimationController(vsync: this, duration: const Duration(seconds: 1))..repeat();
+    _startGachiAudioScan();
+  }
+
+  Future<void> _startGachiAudioScan() async {
+    _addLog('MIC_ACTIVE: PORT 0x01');
+    _addLog('BYPASSING PLUGINS: DIRECT WEB API HOOK INITIATED...');
     
-    _logTimer = Timer.periodic(const Duration(milliseconds: 600), (timer) {
-      if (!mounted) return;
-      setState(() {
-        if (_logStep < _scanSequence.length) {
-          _logs.add('> ${_scanSequence[_logStep]}');
-          HapticFeedback.mediumImpact(); // ログが出るたびに振動
-          _logStep++;
-        } else {
-          timer.cancel();
-          HapticFeedback.heavyImpact();
-          // 数秒後にWizardScreenへ遷移
-          Future.delayed(const Duration(milliseconds: 500), () {
-            if (mounted) {
-              Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const WizardScreen()));
-            }
-          });
-        }
-      });
+    // JS Interopを使ってネイティブのWeb Speech APIを直接叩く（シンボリックリンク問題回避）
+    _addLog('TRANSCRIBING VOCAL DATA...');
+    
+    // タイムアウト5秒で音声認識を実行
+    final transcript = await _audioInterop.transcribeAudio(const Duration(seconds: 5));
+    
+    if (transcript.isNotEmpty && !transcript.startsWith('ERROR')) {
+      _transcribedText = transcript;
+      _addLog('TRANSCRIPTION SUCCESS: [${transcript.length} chars]');
+    } else {
+      _addLog(transcript.isEmpty ? 'NO CLEAR WORDS DETECTED.' : transcript);
+    }
+
+    _addLog('EXTRACTING MEL-FREQUENCY CEPSTRAL COEFFICIENTS...');
+    await Future.delayed(const Duration(milliseconds: 300));
+    
+    _addLog('ANALYZING VOCAL JITTER...');
+    await Future.delayed(const Duration(milliseconds: 300));
+    // ここは演出用のリアルな乱数（本来はAnalyserNodeから取得）
+    final jitter = 0.6 + (math.Random().nextDouble() * 0.3);
+    _addLog('JITTER = ${jitter.toStringAsFixed(4)}');
+    
+    _addLog('ANALYZING VOCAL DOMINANCE...');
+    await Future.delayed(const Duration(milliseconds: 300));
+    final dom = 0.1 + (math.Random().nextDouble() * 0.2);
+    _addLog('DOMINANCE = ${dom.toStringAsFixed(4)}');
+    
+    await Future.delayed(const Duration(milliseconds: 300));
+    _addLog('ACOUSTIC PROFILE LOCKED.');
+    _addLog('ROUTING TO TEXT CONTEXT PROCESSOR...');
+    
+    HapticFeedback.heavyImpact();
+    await Future.delayed(const Duration(milliseconds: 800));
+    
+    if (mounted) {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => WizardScreen(initialText: _transcribedText.isNotEmpty ? _transcribedText : null)),
+      );
+    }
+  }
+
+  void _addLog(String log) {
+    if (!mounted) return;
+    setState(() {
+      _logs.add('> $log');
+      _logStep++;
     });
+    HapticFeedback.mediumImpact();
   }
 
   @override
   void dispose() {
     _waveController.dispose();
-    _logTimer.cancel();
     super.dispose();
   }
 
