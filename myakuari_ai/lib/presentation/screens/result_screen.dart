@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../domain/models/inference_models.dart';
 import '../widgets/character_view.dart';
@@ -238,6 +239,7 @@ class _ResultScreenState extends State<ResultScreen> {
           activeColor: color,
           inactiveColor: color.withOpacity(0.2),
           onChanged: (val) {
+            HapticFeedback.selectionClick();
             setState(() {
               _simulatedRadar[radarKey] = val;
               // 簡易的なスコア再計算ロジック（本来はEdge-Transformerの再推論を叩く）

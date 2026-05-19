@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'presentation/theme.dart';
-import 'presentation/screens/home_screen.dart';
+import 'presentation/screens/splash_screen.dart';
 import 'domain/ml_inference_engine.dart';
 
 void main() async {
@@ -30,7 +30,7 @@ class MyApp extends StatelessWidget {
       supportedLocales: const [
         Locale('ja', 'JP'),
       ],
-      home: const HomeScreen(),
+      home: const BrutalistSplashScreen(),
       debugShowCheckedModeBanner: false,
     );
   }

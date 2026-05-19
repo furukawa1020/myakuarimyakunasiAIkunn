@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'wizard_screen.dart';
 import 'history_screen.dart';
@@ -119,9 +120,31 @@ class HomeScreen extends StatelessWidget {
                         width: double.infinity,
                         child: ElevatedButton(
                           onPressed: () {
+                            HapticFeedback.heavyImpact();
                             Navigator.push(context, MaterialPageRoute(builder: (_) => const WizardScreen()));
                           },
                           child: const Text('INITIALIZE_PROBE'),
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      SizedBox(
+                        width: double.infinity,
+                        child: OutlinedButton(
+                          onPressed: () {
+                            HapticFeedback.vibrate();
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text('MIC_ACTIVE: 分析周波数帯を拡張中...', style: TextStyle(fontFamily: 'monospace')),
+                                backgroundColor: Color(0xFF00FFFF),
+                              )
+                            );
+                            // TODO: 実際のAudioSignalProcessor呼び出しと推論へのブリッジ
+                          },
+                          style: OutlinedButton.styleFrom(
+                            side: const BorderSide(color: Color(0xFF00FFFF)),
+                            foregroundColor: const Color(0xFF00FFFF),
+                          ),
+                          child: const Text('VOICE_OVERRIDE_SCAN (BETA)'),
                         ),
                       ),
                       const SizedBox(height: 20),
