@@ -4,3 +4,11 @@ compatibility_date = "2024-05-19"
 
 [build]
 command = "npm install"
+
+# ── Cloudflare KV: 絶望ベクトルストア ──────────────────────────────
+# セットアップ手順:
+# 1. wrangler kv namespace create DESPAIR_KV
+# 2. 出力された id を下記に貼り付ける
+[[kv_namespaces]]
+binding = "DESPAIR_KV"
+id = "REPLACE_WITH_YOUR_KV_NAMESPACE_ID"

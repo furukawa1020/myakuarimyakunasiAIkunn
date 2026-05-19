@@ -24,54 +24,189 @@
 </head>
 <body>
   <!-- ================================================================
-       Web Speech API Bridge
-       FlutterのネイティブプラグインなしでブラウザのSpeech APIを使用。
-       window.startVoiceRecognition() / window.getVoiceResult() でアクセス。
+       Real Audio Bridge
+       Web Audio API (AnalyserNode) + Web Speech API (interim results)
+       
+       Flutter から呼び出せる関数:
+         window.startAudioScan(timeoutMs)  → マイク取得・計測開始
+         window.stopAudioScan()            → 停止
+         window.getAudioState()           → JSON文字列で状態を返す
+           {
+             recording: bool,
+             transcript: string,       // 確定済みテキスト
+             interimTranscript: string, // 認識中テキスト（リアルタイム）
+             rms: number,              // 音量 0-100
+             jitter: number,           // 声の揺れ(ZCR) 0-100
+             dominantFreqHz: number,   // 主要周波数 Hz
+             spectrum: number[]        // FFTデータ 16バンド 0-255
+           }
        ================================================================ -->
   <script>
-    window._voiceResult = undefined;
-    window._voiceRecording = false;
+    (function() {
+      'use strict';
 
-    window.startVoiceRecognition = function(timeoutMs) {
-      var SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-      if (!SR) { window._voiceResult = ''; return; }
-
-      var recognition = new SR();
-      recognition.lang = 'ja-JP';
-      recognition.interimResults = false;
-      recognition.maxAlternatives = 1;
-      recognition.continuous = false;
-
-      window._voiceResult = undefined;
-      window._voiceRecording = true;
-
-      recognition.onresult = function(e) {
-        window._voiceResult = e.results[0][0].transcript;
-        window._voiceRecording = false;
-      };
-      recognition.onerror = function(e) {
-        console.warn('Voice error:', e.error);
-        window._voiceResult = '';
-        window._voiceRecording = false;
-      };
-      recognition.onend = function() {
-        if (window._voiceResult === undefined) window._voiceResult = '';
-        window._voiceRecording = false;
+      // ── 状態 ──────────────────────────────────────────────────
+      var state = {
+        recording:          false,
+        transcript:         '',
+        interimTranscript:  '',
+        rms:                0,
+        jitter:             0,
+        dominantFreqHz:     0,
+        spectrum:           new Array(16).fill(0),
       };
 
-      try { recognition.start(); }
-      catch(e) { window._voiceResult = ''; window._voiceRecording = false; }
+      var _audioCtx        = null;
+      var _analyser        = null;
+      var _stream          = null;
+      var _recognition     = null;
+      var _metricsTimer    = null;
 
-      setTimeout(function() {
-        if (window._voiceResult === undefined) {
-          try { recognition.stop(); } catch(_) {}
-          window._voiceResult = '';
+      // ── Web Audio API セットアップ ─────────────────────────────
+      async function _startAudio() {
+        try {
+          _stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
+          _audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+          var source = _audioCtx.createMediaStreamSource(_stream);
+          _analyser = _audioCtx.createAnalyser();
+          _analyser.fftSize = 256;           // 128バンド (我々は先頭16バンドを使う)
+          _analyser.smoothingTimeConstant = 0.8;
+          source.connect(_analyser);
+          _startMetricsLoop();
+        } catch (e) {
+          console.warn('[AudioScan] getUserMedia failed:', e);
         }
-      }, timeoutMs || 8000);
-    };
+      }
 
-    window.getVoiceResult = function() { return window._voiceResult; };
-    window.isVoiceRecording = function() { return window._voiceRecording; };
+      // ── リアルタイム音声メトリクス計測ループ ─────────────────
+      function _startMetricsLoop() {
+        var freqData  = new Uint8Array(_analyser.frequencyBinCount);  // 128要素
+        var timeData  = new Float32Array(_analyser.fftSize);           // 256要素
+
+        _metricsTimer = setInterval(function() {
+          if (!_analyser) return;
+
+          // 周波数ドメインデータ (FFT)
+          _analyser.getByteFrequencyData(freqData);
+
+          // 先頭16バンドを抽出 (低周波〜中周波)
+          var spectrum16 = [];
+          var bandSize = Math.floor(freqData.length / 16);
+          for (var b = 0; b < 16; b++) {
+            var sum = 0;
+            for (var k = 0; k < bandSize; k++) sum += freqData[b * bandSize + k];
+            spectrum16.push(Math.round(sum / bandSize));
+          }
+
+          // RMS (音量)
+          var sumSq = 0;
+          for (var i = 0; i < freqData.length; i++) sumSq += freqData[i] * freqData[i];
+          var rms = Math.sqrt(sumSq / freqData.length);
+
+          // 主要周波数 (Hz)
+          var maxIdx = 0;
+          for (var i = 1; i < freqData.length; i++) {
+            if (freqData[i] > freqData[maxIdx]) maxIdx = i;
+          }
+          var domFreq = Math.round(maxIdx * _audioCtx.sampleRate / _analyser.fftSize);
+
+          // ゼロ交差率 (声の揺れ/Jitter の代理指標) — 時間ドメイン
+          _analyser.getFloatTimeDomainData(timeData);
+          var zcr = 0;
+          for (var i = 1; i < timeData.length; i++) {
+            if ((timeData[i] >= 0) !== (timeData[i - 1] >= 0)) zcr++;
+          }
+          var normalizedZcr = Math.round((zcr / timeData.length) * 100);
+
+          // 状態更新
+          state.rms            = Math.round(rms);
+          state.jitter         = normalizedZcr;
+          state.dominantFreqHz = domFreq;
+          state.spectrum       = spectrum16;
+
+        }, 80); // 80ms = ~12fps のリアルタイム更新
+      }
+
+      // ── Web Speech API セットアップ ────────────────────────────
+      function _startSpeech(timeoutMs) {
+        var SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+        if (!SR) { console.warn('[AudioScan] SpeechRecognition not supported'); return; }
+
+        _recognition = new SR();
+        _recognition.lang             = 'ja-JP';
+        _recognition.interimResults   = true;   // ← リアルタイム中間結果
+        _recognition.maxAlternatives  = 1;
+        _recognition.continuous       = true;   // 自動停止しない
+
+        _recognition.onresult = function(event) {
+          var interim = '';
+          var finalText = '';
+          for (var i = event.resultIndex; i < event.results.length; i++) {
+            var text = event.results[i][0].transcript;
+            if (event.results[i].isFinal) {
+              finalText += text;
+            } else {
+              interim += text;
+            }
+          }
+          state.transcript        += finalText;
+          state.interimTranscript  = interim;
+        };
+
+        _recognition.onerror = function(e) {
+          console.warn('[AudioScan] Speech error:', e.error);
+        };
+
+        _recognition.onend = function() {
+          // continuous=true でも途切れる場合があるため自動再起動
+          if (state.recording) {
+            try { _recognition.start(); } catch(_) {}
+          }
+        };
+
+        try { _recognition.start(); } catch(e) {
+          console.warn('[AudioScan] Could not start recognition:', e);
+        }
+
+        // タイムアウトで自動停止
+        setTimeout(function() { window.stopAudioScan(); }, timeoutMs || 10000);
+      }
+
+      // ── 公開API ──────────────────────────────────────────────
+      window.startAudioScan = function(timeoutMs) {
+        if (state.recording) return;
+        state.recording         = true;
+        state.transcript        = '';
+        state.interimTranscript = '';
+        _startAudio().then(function() { _startSpeech(timeoutMs); });
+      };
+
+      window.stopAudioScan = function() {
+        state.recording = false;
+        if (_metricsTimer) { clearInterval(_metricsTimer); _metricsTimer = null; }
+        if (_recognition)  { try { _recognition.stop(); } catch(_) {} _recognition = null; }
+        if (_stream)       { _stream.getTracks().forEach(function(t) { t.stop(); }); _stream = null; }
+        if (_audioCtx)     { _audioCtx.close(); _audioCtx = null; }
+        _analyser = null;
+      };
+
+      window.getAudioState = function() {
+        return JSON.stringify({
+          recording:          state.recording,
+          transcript:         state.transcript,
+          interimTranscript:  state.interimTranscript,
+          rms:                state.rms,
+          jitter:             state.jitter,
+          dominantFreqHz:     state.dominantFreqHz,
+          spectrum:           state.spectrum,
+        });
+      };
+
+      // Legacy compat
+      window.startVoiceRecognition = function(ms) { window.startAudioScan(ms); };
+      window.getVoiceResult = function() { return state.transcript || (state.recording ? undefined : ''); };
+
+    })();
   </script>
   <script src="flutter_bootstrap.js" async></script>
 </body>
