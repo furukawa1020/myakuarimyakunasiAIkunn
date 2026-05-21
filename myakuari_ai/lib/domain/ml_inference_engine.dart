@@ -133,74 +133,12 @@ class MLInferenceEngine {
     // 2. 日英対応の高度な特徴量抽出
     final allText = '${input.who} ${input.what} ${input.why} ${input.how}'.toLowerCase();
 
-    // attrO (魅力)
     double attrO = 5.5;
-    final posAttr = ['可愛い', 'かわいい', '美人', '綺麗', 'きれい', 'イケメン', 'かっこいい', 'カッコイイ', 'タイプ', '魅力', 'cute', 'cool', 'handsome', 'beautiful', 'gorgeous', 'pretty', 'attractive', 'hot'];
-    final negAttr = ['タイプじゃない', '好みじゃない', '普通', 'パッとしない', 'ugly', 'plain', 'not my type', 'unattractive'];
-    for (var k in posAttr) {
-      if (allText.contains(k)) attrO += 1.5;
-    }
-    for (var k in negAttr) {
-      if (allText.contains(k)) attrO -= 1.5;
-    }
-    attrO = attrO.clamp(1.0, 10.0);
-
-    // sincO (誠実)
     double sincO = 6.0;
-    final posSinc = ['誠実', '真面目', '優しい', '丁寧', '親切', '信用', '信頼', 'マメ', 'honest', 'sincere', 'kind', 'polite', 'faithful', 'trustworthy'];
-    final negSinc = ['不誠実', 'テキトー', 'チャラい', '嘘', '浮気', '雑', '適当', 'dishonest', 'unreliable', 'liar', 'insincere', 'rude'];
-    for (var k in posSinc) {
-      if (allText.contains(k)) sincO += 1.5;
-    }
-    for (var k in negSinc) {
-      if (allText.contains(k)) sincO -= 1.5;
-    }
-    sincO = sincO.clamp(1.0, 10.0);
-
-    // intelO (知性)
     double intelO = 7.0;
-    final posIntel = ['賢い', 'スマート', '知的', '頭いい', '頭が良い', '仕事ができる', '尊敬', '理性的', 'smart', 'intelligent', 'clever', 'wise', 'knowledgeable'];
-    final negIntel = ['馬鹿', '頭悪い', '話が通じない', '噛み合わない', 'stupid', 'dumb', 'foolish'];
-    for (var k in posIntel) {
-      if (allText.contains(k)) intelO += 1.5;
-    }
-    for (var k in negIntel) {
-      if (allText.contains(k)) intelO -= 1.5;
-    }
-    intelO = intelO.clamp(1.0, 10.0);
-
-    // funO (楽しさ)
     double funO = freqVal;
-    final posFun = ['楽しい', '面白い', '笑', '盛り上がる', 'ハッピー', '笑顔', '楽しい時間', 'fun', 'funny', 'laugh', 'happy', 'enjoy', 'cheerful', 'humor'];
-    final negFun = ['つまらない', '退屈', '苦痛', '沈黙', '気まずい', 'boring', 'dull', 'awkward', 'silent'];
-    for (var k in posFun) {
-      if (allText.contains(k)) funO += 1.5;
-    }
-    for (var k in negFun) {
-      if (allText.contains(k)) funO -= 1.5;
-    }
-    funO = funO.clamp(1.0, 10.0);
-
-    // sharO (共通点)
     double sharO = 6.0;
-    final posShar = ['共通', '同じ', '趣味', '意気投合', '話が合う', '共感', '似ている', 'hobby', 'hobbies', 'shared', 'same', 'alike', 'common', 'sympathy', 'resonate'];
-    final negShar = ['合わない', '趣味が違う', '価値観が合わない', '無関係', 'no common', 'different', 'disagree'];
-    for (var k in posShar) {
-      if (allText.contains(k)) sharO += 1.5;
-    }
-    for (var k in negShar) {
-      if (allText.contains(k)) sharO -= 1.5;
-    }
-    sharO = sharO.clamp(1.0, 10.0);
-
-    // likeO (好感度)
     double likeO = (continuation + initiative) / 2.0;
-    final posLike = ['好き', '好意', '愛', '気になる', '魅了', '惚', 'love', 'like', 'crush', 'fancy', 'fond', 'adore'];
-    final negLike = ['嫌い', '興味ない', '苦手', '関心がない', 'dislike', 'hate', 'ignore', 'not interested'];
-    for (var k in posLike) {
-      if (allText.contains(k)) likeO += 2.0;
-    }
-    for (var k in negLike) {
       if (allText.contains(k)) likeO -= 2.0;
     }
     likeO = likeO.clamp(1.0, 10.0);

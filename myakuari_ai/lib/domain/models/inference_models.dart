@@ -38,6 +38,7 @@ class InferenceInput {
   final int? voiceJitter;
   final int? voiceDominantFreqHz;
   final bool isVoice;
+  final bool isEnglish;
 
   InferenceInput({
     required this.who,
@@ -55,6 +56,7 @@ class InferenceInput {
     this.voiceJitter,
     this.voiceDominantFreqHz,
     this.isVoice = false,
+    this.isEnglish = false,
   });
 
   bool get isComplete =>

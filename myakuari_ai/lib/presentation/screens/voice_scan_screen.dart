@@ -61,6 +61,10 @@ class _VoiceScanScreenState extends State<VoiceScanScreen> {
   InferenceInput _parseInputFromText(String text, AudioScanState s) {
     final lowerText = text.toLowerCase();
 
+    // Detect if the speech is English or Japanese by matching Japanese character sets
+    final hasJapanese = RegExp(r'[\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FAF]').hasMatch(text);
+    final isEnglish = !hasJapanese && text.isNotEmpty;
+
     // 1. Who (関係性)
     String who = '相手';
     if (lowerText.contains('先輩') || lowerText.contains('senpai')) {
@@ -133,10 +137,12 @@ class _VoiceScanScreenState extends State<VoiceScanScreen> {
 
     return InferenceInput(
       who: who,
-      what: text.isNotEmpty ? text : '音声での近況報告',
+      what: text.isNotEmpty ? text : (isEnglish ? 'Acoustic update report' : '音声での近況報告'),
       when: when,
       where: where,
-      why: '音声から自動解析された心理状態および発言データ',
+      why: isEnglish 
+          ? 'Psychological status and utterance data auto-analyzed from voice' 
+          : '音声から自動解析された心理状態および発言データ',
       how: text,
       contactFrequency: contactFrequency,
       initiative: initiative,
@@ -147,6 +153,7 @@ class _VoiceScanScreenState extends State<VoiceScanScreen> {
       voiceJitter: s.jitter,
       voiceDominantFreqHz: s.dominantFreqHz,
       isVoice: true,
+      isEnglish: isEnglish,
     );
   }
 
