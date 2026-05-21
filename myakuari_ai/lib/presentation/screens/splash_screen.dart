@@ -251,7 +251,7 @@ class _BrutalistSplashScreenState extends State<BrutalistSplashScreen> with Tick
           text,
           style: TextStyle(
             fontSize: fontSize,
-            fontWeight: FontWeight.black,
+            fontWeight: FontWeight.w900,
             letterSpacing: 2,
             foreground: Paint()
               ..style = PaintingStyle.stroke
@@ -264,7 +264,7 @@ class _BrutalistSplashScreenState extends State<BrutalistSplashScreen> with Tick
           text,
           style: TextStyle(
             fontSize: fontSize,
-            fontWeight: FontWeight.black,
+            fontWeight: FontWeight.w900,
             letterSpacing: 2,
             color: fillColor,
             shadows: [

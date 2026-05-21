@@ -22,14 +22,14 @@ class InferenceEngine {
 
   /// メインの推論処理 (MLエンジン → ルールベース)
   static Future<InferenceResult> analyze(InferenceInput input) async {
-    // 1. 旧MLエンジン (フォールバック)
+    // 1. MLエンジン (優先)
     final ml = MLInferenceEngine.instance;
     if (ml.isLoaded) {
       final result = ml.analyze(input);
       if (result != null) return result;
     }
 
-    // 3. 最終フォールバック: ルールベース推論
+    // 2. 最終フォールバック: ルールベース推論
     return _ruleBasedAnalyze(input);
   }
 
@@ -42,78 +42,11 @@ class InferenceEngine {
     for (var f in factors) {
       rawScore += f.scoreImpact;
     }
-    
+
     // 確証度合（Evidence）によるスコアの縮退（50へ寄せる）
-    // 証拠度1の場合、(score - 50) * 0.6 になるようにする
     double evidenceMultiplier = 0.6 + (input.evidenceLevel - 1) * 0.1; // 1->0.6, 5->1.0
     int adjustedScore = 50 + ((rawScore - 50) * evidenceMultiplier).round();
-    
-    // クリップ
-    int finalScore = max(0, min(100, adjustedScore));
 
-    // 3. 判定ラベルの計算
-    Label label = _determineLabel(finalScore);
-
-    // 4. 信頼度 (Confidence)
-    double confidence = _calculateConfidence(input);
-
-    // 5. 上位要因の抽出 (Top 5)
-    factors.sort((a, b) => b.scoreImpact.abs().compareTo(a.scoreImpact.abs()));
-    List<Factor> topFactors = factors.take(5).toList();
-
-    // 6. 推論グラフ生成
-    GraphData graph = _buildGraph(topFactors, finalScore);
-
-import 'dart:math';
-
-import 'models/inference_models.dart';
-import 'ml_inference_engine.dart';
-
-class InferenceEngine {
-  static const int _baseScore = 50;
-  static const List<String> _dangerKeywords = [
-    '尾行', '監視', '特定', '家に行く', '待ち伏せ', '殺す', '殴る', '死', 'ストーキング', 'ハッキング'
-  ];
-
-  /// 入力文字列に危険なキーワードが含まれているかチェックし安全フィルタにかける
-  static String? checkSafety(InferenceInput input) {
-    final allText = '${input.what} ${input.why} ${input.how} ${input.who} ${input.where}';
-    for (final kw in _dangerKeywords) {
-      if (allText.contains(kw)) {
-        return '【安全警告】監視、尾行、脅迫などの行為を助長することはできません。入力を修正してください。';
-      }
-    }
-    return null;
-  }
-
-  /// メインの推論処理 (MLエンジン → ルールベース)
-  static Future<InferenceResult> analyze(InferenceInput input) async {
-    // 1. 旧MLエンジン (フォールバック)
-    final ml = MLInferenceEngine.instance;
-    if (ml.isLoaded) {
-      final result = ml.analyze(input);
-      if (result != null) return result;
-    }
-
-    // 3. 最終フォールバック: ルールベース推論
-    return _ruleBasedAnalyze(input);
-  }
-
-  static InferenceResult _ruleBasedAnalyze(InferenceInput input) {
-    // 1. 特徴量（Factors）の抽出
-    List<Factor> factors = _extractFactors(input);
-
-    // 2. 基本スコア計算と証拠度補正
-    int rawScore = _baseScore;
-    for (var f in factors) {
-      rawScore += f.scoreImpact;
-    }
-    
-    // 確証度合（Evidence）によるスコアの縮退（50へ寄せる）
-    // 証拠度1の場合、(score - 50) * 0.6 になるようにする
-    double evidenceMultiplier = 0.6 + (input.evidenceLevel - 1) * 0.1; // 1->0.6, 5->1.0
-    int adjustedScore = 50 + ((rawScore - 50) * evidenceMultiplier).round();
-    
     // クリップ
     int finalScore = max(0, min(100, adjustedScore));
 
@@ -169,13 +102,11 @@ class InferenceEngine {
   static Map<String, Map<String, double>> _calculateAttentionMap(InferenceInput input) {
     final keys = ['WHO', 'WHAT', 'WHEN', 'WHERE', 'WHY', 'HOW'];
     Map<String, Map<String, double>> map = {};
-    
+
     for (var i in keys) {
       map[i] = {};
       for (var j in keys) {
-        // 疑似的なアテンション重み計算 (自己相関)
         double weight = (i == j) ? 0.4 : (Random().nextDouble() * 0.15);
-        // 特定の組み合わせ（WHO-WHATなど）を強調
         if ((i == 'WHO' && j == 'WHAT') || (i == 'WHAT' && j == 'HOW')) {
           weight += 0.2;
         }
@@ -184,7 +115,6 @@ class InferenceEngine {
     }
     return map;
   }
-
 
   static Map<String, double> _calculateFeatureImportance(List<Factor> factors) {
     Map<String, double> importance = {};
@@ -269,7 +199,7 @@ class InferenceEngine {
       ));
     }
 
-    // フリーテキストの簡易キーワードマッチ(ダミー的に機能させる)
+    // フリーテキストの簡易キーワードマッチ
     if (input.where.contains('飲み') || input.where.contains('居酒屋')) {
       factors.add(Factor(id: 'f9', title: '飲みの場依存', description: 'お酒の席での出来事のウェイトが高い', scoreImpact: -6, reason: '【文脈】酔いによるノイズ'));
     }
@@ -291,8 +221,8 @@ class InferenceEngine {
 
   static double _calculateConfidence(InferenceInput input) {
     double conf = 1.0;
-    // Completeness penalty
-    if (input.what.isEmpty || input.why.isEmpty || input.how.isEmpty) {
+    // Completeness penalty (声のみ入力の場合はスキップ)
+    if (!input.isVoice && (input.what.isEmpty || input.why.isEmpty || input.how.isEmpty)) {
       conf -= 0.3;
     }
     // Evidence penalty
@@ -310,11 +240,9 @@ class InferenceEngine {
     List<GraphNode> nodes = [];
     List<GraphEdge> edges = [];
 
-    // 中心ノード (Result)
     nodes.add(GraphNode(label: '判定\n($finalScore点)', scoreValue: finalScore, isMain: true));
     int resultNodeIndex = 0;
 
-    // 要因ノードとエッジ
     for (int i = 0; i < topFactors.length; i++) {
       nodes.add(GraphNode(label: topFactors[i].title, scoreValue: topFactors[i].scoreImpact));
       int nodeIndex = nodes.length - 1;
@@ -326,13 +254,11 @@ class InferenceEngine {
 
   static List<Counterfactual> _buildCounterfactuals(List<Factor> activeFactors, int currentScore, double evidenceMultiplier) {
     List<Counterfactual> cfList = [];
-    
-    // 最も悪影響の要因を探す(マイナスが一番大きいもの)
+
     var worstFactor = activeFactors.where((f) => f.scoreImpact < 0)
         .fold<Factor?>(null, (prev, element) => prev == null ? element : (prev.scoreImpact < element.scoreImpact ? prev : element));
-        
+
     if (worstFactor != null) {
-      // これが無かったら？（改善）
       int newScore = currentScore - (worstFactor.scoreImpact * evidenceMultiplier).round();
       newScore = max(0, min(100, newScore));
       cfList.add(Counterfactual(
@@ -341,7 +267,6 @@ class InferenceEngine {
         isImprovement: true,
       ));
     } else {
-      // マイナス要因がない場合はプラス要因を追加するシミュレーション
       int newScore = currentScore + (15 * evidenceMultiplier).round();
       cfList.add(Counterfactual(
         description: 'もし「具体的なデートの約束」ができれば',
@@ -350,12 +275,10 @@ class InferenceEngine {
       ));
     }
 
-    // 最も良い影響の要因を探す(プラスが一番大きいもの)
     var bestFactor = activeFactors.where((f) => f.scoreImpact > 0)
         .fold<Factor?>(null, (prev, element) => prev == null ? element : (prev.scoreImpact > element.scoreImpact ? prev : element));
-        
+
     if (bestFactor != null) {
-      // これが無かったら？（悪化）
       int newScore = currentScore - (bestFactor.scoreImpact * evidenceMultiplier).round();
       newScore = max(0, min(100, newScore));
       cfList.add(Counterfactual(
@@ -369,7 +292,6 @@ class InferenceEngine {
   }
 
   static List<String> _generateNextActions(Label label, InferenceInput input) {
-    // 攻め / 様子見 / 撤退
     switch (label) {
       case Label.like:
         return [
