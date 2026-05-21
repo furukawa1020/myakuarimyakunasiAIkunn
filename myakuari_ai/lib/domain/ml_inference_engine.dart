@@ -47,11 +47,33 @@ class MLInferenceEngine {
       final loveScore = (probs[2] * 100).round().clamp(0, 100);
       final confidence = probs[labelIdx].clamp(0.0, 1.0);
 
-      // ランク判定
-      final grade = _calculateGrade(loveScore);
-
       // スコアのダイナミックレンジ拡大 (ユーザー体験向上のための演出)
       final dynamicScore = _distortScore(loveScore, label);
+
+      // 音声特徴量によるスコア微調整 (声の震え/Jitterによる緊張度補正)
+      int voiceImpact = 0;
+      if (input.isVoice && input.voiceJitter != null) {
+        final jitter = input.voiceJitter!;
+        if (jitter > 30) {
+          voiceImpact = 15; // 強い緊張・興奮は好意シグナル
+        } else if (jitter > 12) {
+          voiceImpact = 8;
+        } else {
+          voiceImpact = -5; // 平常心・リラックスはプラトニック寄り
+        }
+      }
+
+      final adjustedScore = (dynamicScore + voiceImpact).clamp(0, 100);
+
+      // 調整後スコアに基づくラベルの再決定
+      Label adjustedLabel = label;
+      if (adjustedScore >= 65) {
+        adjustedLabel = Label.like;
+      } else if (adjustedScore <= 39) {
+        adjustedLabel = Label.nope;
+      } else {
+        adjustedLabel = Label.neutral;
+      }
 
       // レーダーチャート用データ (0.0 - 1.0)
       final radarData = {
@@ -62,11 +84,11 @@ class MLInferenceEngine {
         '共通点': (features[4] / 10.0).clamp(0.1, 1.0),
       };
 
-      final topFactors = _buildFactors(features);
-      final graph      = _buildGraph(topFactors, loveScore);
-      final cfs        = _buildCounterfactuals(loveScore);
-      final actions    = _generateActions(label);
-      final script     = _generateEnhancedScript(label, loveScore, topFactors, features);
+      final topFactors = _buildFactors(features, input);
+      final graph      = _buildGraph(topFactors, adjustedScore);
+      final cfs        = _buildCounterfactuals(adjustedScore);
+      final actions    = _generateActions(adjustedLabel);
+      final script     = _generateEnhancedScript(adjustedLabel, adjustedScore, topFactors, features, input);
 
       final featureImp = <String, double>{};
       for (final f in topFactors) {
@@ -76,11 +98,11 @@ class MLInferenceEngine {
 
       return InferenceResult(
         input: input,
-        label: label,
-        labelText: label.text,
-        loveScore: dynamicScore, // 補正後のスコアを使用
+        label: adjustedLabel,
+        labelText: adjustedLabel.text,
+        loveScore: adjustedScore,
         confidence: confidence,
-        compatibilityGrade: _calculateGrade(dynamicScore),
+        compatibilityGrade: _calculateGrade(adjustedScore),
         radarData: radarData,
         topFactors: topFactors,
         graph: graph,
@@ -102,57 +124,109 @@ class MLInferenceEngine {
     final continueMap   = <String, double>{'続いてる': 8.0, '普通': 6.0, '途切れた': 2.0};
     final contactMap    = [2.0, 4.0, 6.0, 8.0, 10.0];
 
-    // 1. 基本値（UIからの入力、なければデフォルト）
+    // 1. 基本値
     double initiative   = initiativeMap[input.initiative] ?? 6.0;
     double concreteness = concreteMap[input.concreteness] ?? 3.0;
     double continuation = continueMap[input.continuation] ?? 2.0;
     double freqVal      = contactMap[(input.contactFrequency - 1).clamp(0, 4)];
 
-    // 2. テキストからのキーワード判定による「AI的」な特徴量補正
-    final allText = '${input.who} ${input.what} ${input.why} ${input.how}';
+    // 2. 日英対応の高度な特徴量抽出
+    final allText = '${input.who} ${input.what} ${input.why} ${input.how}'.toLowerCase();
 
-    // 主導権 (Initiative) の補正: 相手からのアクション
-    final positiveInitiative = ['誘われた', 'きた', 'きてくれた', 'LINEがくる', '返信早い', '誘い', 'アプローチ'];
-    final negativeInitiative = ['誘った', '既読無視', '未読無視', '返信こない', '自分から', 'そっけない'];
-    
-    for (var k in positiveInitiative) {
-      if (allText.contains(k)) initiative = math.max(initiative, 8.5);
+    // attrO (魅力)
+    double attrO = 5.5;
+    final posAttr = ['可愛い', 'かわいい', '美人', '綺麗', 'きれい', 'イケメン', 'かっこいい', 'カッコイイ', 'タイプ', '魅力', 'cute', 'cool', 'handsome', 'beautiful', 'gorgeous', 'pretty', 'attractive', 'hot'];
+    final negAttr = ['タイプじゃない', '好みじゃない', '普通', 'パッとしない', 'ugly', 'plain', 'not my type', 'unattractive'];
+    for (var k in posAttr) {
+      if (allText.contains(k)) attrO += 1.5;
     }
-    for (var k in negativeInitiative) {
-      if (allText.contains(k)) initiative = math.min(initiative, 3.5);
+    for (var k in negAttr) {
+      if (allText.contains(k)) attrO -= 1.5;
+    }
+    attrO = attrO.clamp(1.0, 10.0);
+
+    // sincO (誠実)
+    double sincO = 6.0;
+    final posSinc = ['誠実', '真面目', '優しい', '丁寧', '親切', '信用', '信頼', 'マメ', 'honest', 'sincere', 'kind', 'polite', 'faithful', 'trustworthy'];
+    final negSinc = ['不誠実', 'テキトー', 'チャラい', '嘘', '浮気', '雑', '適当', 'dishonest', 'unreliable', 'liar', 'insincere', 'rude'];
+    for (var k in posSinc) {
+      if (allText.contains(k)) sincO += 1.5;
+    }
+    for (var k in negSinc) {
+      if (allText.contains(k)) sincO -= 1.5;
+    }
+    sincO = sincO.clamp(1.0, 10.0);
+
+    // intelO (知性)
+    double intelO = 7.0;
+    final posIntel = ['賢い', 'スマート', '知的', '頭いい', '頭が良い', '仕事ができる', '尊敬', '理性的', 'smart', 'intelligent', 'clever', 'wise', 'knowledgeable'];
+    final negIntel = ['馬鹿', '頭悪い', '話が通じない', '噛み合わない', 'stupid', 'dumb', 'foolish'];
+    for (var k in posIntel) {
+      if (allText.contains(k)) intelO += 1.5;
+    }
+    for (var k in negIntel) {
+      if (allText.contains(k)) intelO -= 1.5;
+    }
+    intelO = intelO.clamp(1.0, 10.0);
+
+    // funO (楽しさ)
+    double funO = freqVal;
+    final posFun = ['楽しい', '面白い', '笑', '盛り上がる', 'ハッピー', '笑顔', '楽しい時間', 'fun', 'funny', 'laugh', 'happy', 'enjoy', 'cheerful', 'humor'];
+    final negFun = ['つまらない', '退屈', '苦痛', '沈黙', '気まずい', 'boring', 'dull', 'awkward', 'silent'];
+    for (var k in posFun) {
+      if (allText.contains(k)) funO += 1.5;
+    }
+    for (var k in negFun) {
+      if (allText.contains(k)) funO -= 1.5;
+    }
+    funO = funO.clamp(1.0, 10.0);
+
+    // sharO (共通点)
+    double sharO = 6.0;
+    final posShar = ['共通', '同じ', '趣味', '意気投合', '話が合う', '共感', '似ている', 'hobby', 'hobbies', 'shared', 'same', 'alike', 'common', 'sympathy', 'resonate'];
+    final negShar = ['合わない', '趣味が違う', '価値観が合わない', '無関係', 'no common', 'different', 'disagree'];
+    for (var k in posShar) {
+      if (allText.contains(k)) sharO += 1.5;
+    }
+    for (var k in negShar) {
+      if (allText.contains(k)) sharO -= 1.5;
+    }
+    sharO = sharO.clamp(1.0, 10.0);
+
+    // likeO (好感度)
+    double likeO = (continuation + initiative) / 2.0;
+    final posLike = ['好き', '好意', '愛', '気になる', '魅了', '惚', 'love', 'like', 'crush', 'fancy', 'fond', 'adore'];
+    final negLike = ['嫌い', '興味ない', '苦手', '関心がない', 'dislike', 'hate', 'ignore', 'not interested'];
+    for (var k in posLike) {
+      if (allText.contains(k)) likeO += 2.0;
+    }
+    for (var k in negLike) {
+      if (allText.contains(k)) likeO -= 2.0;
+    }
+    likeO = likeO.clamp(1.0, 10.0);
+
+    // probO (再会意欲/また会いたい確率)
+    double probO = concreteness;
+    final posProb = ['約束', '予定', 'デート', '遊びに行く', '次も', '会いたい', '行くことに', '楽しみ', '食事', 'ランチ', '飲み', 'date', 'promise', 'meet', 'appointment', 'next time', 'see you'];
+    final negProb = ['断られた', '忙しい', '予定合わない', '社交辞令', '断る', '既読無視', '未読無視', '返信こない', 'busy', 'rejected', 'cancel', 'no reply', 'ignore'];
+    for (var k in posProb) {
+      if (allText.contains(k)) probO += 1.5;
+    }
+    for (var k in negProb) {
+      if (allText.contains(k)) probO -= 1.5;
+    }
+    probO = probO.clamp(1.0, 10.0);
+
+    // metO (面識)
+    double metO = 0.0;
+    final posMet = ['友達', '同僚', '同期', '先輩', '後輩', '知り合い', '昔から', '幼馴染', '以前から', '既知', 'friend', 'colleague', 'classmate', 'known', 'met before'];
+    for (var k in posMet) {
+      if (allText.contains(k)) {
+        metO = 1.0;
+        break;
+      }
     }
 
-    // 具体性 (Concreteness/Prob) の補正: 未来の予定や親密度
-    final positiveConcrete = ['約束', '予定', '行くことに', '楽しみ', 'デート', '二人で', '遊びに', '映画', '食事', 'ランチ', '飲み'];
-    final negativeConcrete = ['紹介', '友達', '相談', 'みんなで', 'グループ', '仕事だけ', '事務的'];
-
-    for (var k in positiveConcrete) {
-      if (allText.contains(k)) concreteness = math.max(concreteness, 8.5);
-    }
-    for (var k in negativeConcrete) {
-      if (allText.contains(k)) concreteness = math.min(concreteness, 3.5);
-    }
-
-    // 継続性 (Continuation) の補正: 関係の安定性
-    final positiveContinue = ['毎日', 'ずっと', '続いてる', '頻繁', 'よく', 'いつも'];
-    for (var k in positiveContinue) {
-      if (allText.contains(k)) continuation = math.max(continuation, 8.5);
-    }
-
-    // Speed Dating特徴空間への変換
-    final attrO  = (initiative + concreteness) / 2.0;         // 魅力度代理
-    final sincO  = continuation;                                // 誠実さ代理
-    const intelO = 7.5;                                         // 知性（固定中間値、少し高めに）
-    final funO   = freqVal;                                     // 楽しさ代理
-    final sharO  = (input.where.contains('趣味') || allText.contains('趣味') || allText.contains('共通') || allText.contains('同じ')) ? 8.5
-                 : (input.where.contains('職場') || allText.contains('仕事') || allText.contains('業務')) ? 5.5 : 6.5;
-    final likeO  = (continuation + initiative) / 2.0;          // 好感度代理
-    final probO  = concreteness;                                // また会いたい確率 (0-10スケール)
-    final metO   = (input.who.contains('職場') ||
-                    input.who.contains('友達') ||
-                    input.who.contains('同僚') ||
-                    allText.contains('同期') ||
-                    allText.contains('既知')) ? 1.0 : 0.0;
     const impraceO = 4.0;
     const imprelO  = 3.0;
 
@@ -185,7 +259,7 @@ class MLInferenceEngine {
     return exp.map((e) => e / sum).toList();
   }
 
-  List<Factor> _buildFactors(List<double> features) {
+  List<Factor> _buildFactors(List<double> features, InferenceInput input) {
     final featNames  = (_meta!['features'] as List).cast<String>();
     final importance = _meta!['feature_importance'] as Map<String, dynamic>;
     final desc       = _meta!['feature_description'] as Map<String, dynamic>;
@@ -205,6 +279,34 @@ class MLInferenceEngine {
         reason: '【ML重要度 ${(imp * 100).toStringAsFixed(0)}%】',
       ));
     }
+
+    if (input.isVoice && input.voiceJitter != null) {
+      final jitter = input.voiceJitter!;
+      int impact = 0;
+      String descText = '';
+      String reasonText = '';
+      if (jitter > 30) {
+        impact = 18;
+        descText = '声の震え率が高レベル ($jitter%)';
+        reasonText = '対象への強い緊張・胸の高鳴り';
+      } else if (jitter > 12) {
+        impact = 10;
+        descText = '声の震え率が中レベル ($jitter%)';
+        reasonText = '意識している兆候・感情的興奮';
+      } else {
+        impact = -6;
+        descText = '声の震えが極めて平坦 ($jitter%)';
+        reasonText = '緊張感のない平常心・リラックス';
+      }
+      factors.add(Factor(
+        id: 'f_voice_jitter',
+        title: '声の震え (緊張度)',
+        description: descText,
+        scoreImpact: impact,
+        reason: '【音声解析 $reasonText】',
+      ));
+    }
+
     factors.sort((a, b) => b.scoreImpact.abs().compareTo(a.scoreImpact.abs()));
     return factors.take(5).toList();
   }
@@ -261,10 +363,10 @@ class MLInferenceEngine {
     return 'D';
   }
 
-  String _generateEnhancedScript(Label label, int score, List<Factor> factors, List<double> features) {
+  String _generateEnhancedScript(Label label, int score, List<Factor> factors, List<double> features, InferenceInput input) {
     String s = '判定結果は、ズバリ【${label.text}】！';
     final grade = _calculateGrade(score);
-    
+
     if (grade == 'S') {
       s += '文句なしの相性Sランクなのだ！もう告白してもいいレベルなのだ。';
     } else if (grade == 'A') {
@@ -275,6 +377,17 @@ class MLInferenceEngine {
       s += '今はCランク...まだ「友達」の枠を出ていない可能性があるのだ。';
     } else {
       s += '厳しいDランクなのだ。一度引いて、戦略を練り直すべきなのだ。';
+    }
+
+    if (input.isVoice && input.voiceJitter != null) {
+      final jitter = input.voiceJitter!;
+      if (jitter > 30) {
+        s += ' 音声解析によると、君の声はかなり震えていたのだ！緊張や胸の高鳴りがデータにハッキリ出ているのだ。対象のことを深く意識している証拠なのだ！';
+      } else if (jitter > 12) {
+        s += ' 音声解析によると、君の声には適度な揺らぎ（緊張感）が観測されたのだ。冷静を装いつつも、内心はドキドキしているのが伝わるのだ！';
+      } else {
+        s += ' 音声解析によると、君の声は非常に冷静で安定していたのだ。リラックスして話せているか、あるいはまだ感情の波が少ない状態かもしれないのだ。';
+      }
     }
 
     if (factors.isNotEmpty) {

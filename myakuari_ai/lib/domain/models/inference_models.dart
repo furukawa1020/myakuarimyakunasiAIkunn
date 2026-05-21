@@ -33,6 +33,12 @@ class InferenceInput {
   final String continuation; // 続いてる/途切れた/未実施
   final int evidenceLevel; // 1-5
 
+  // Voice acoustic metrics
+  final int? voiceRms;
+  final int? voiceJitter;
+  final int? voiceDominantFreqHz;
+  final bool isVoice;
+
   InferenceInput({
     required this.who,
     required this.what,
@@ -45,10 +51,14 @@ class InferenceInput {
     required this.concreteness,
     required this.continuation,
     required this.evidenceLevel,
+    this.voiceRms,
+    this.voiceJitter,
+    this.voiceDominantFreqHz,
+    this.isVoice = false,
   });
 
   bool get isComplete =>
-      who.isNotEmpty && what.isNotEmpty && when.isNotEmpty && where.isNotEmpty && why.isNotEmpty && how.isNotEmpty;
+      isVoice || (who.isNotEmpty && what.isNotEmpty && when.isNotEmpty && where.isNotEmpty && why.isNotEmpty && how.isNotEmpty);
 }
 
 class Factor {

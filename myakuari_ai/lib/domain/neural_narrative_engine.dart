@@ -169,15 +169,30 @@ class NeuralNarrativeEngine {
                     ? 'C'
                     : 'D';
 
-    return '【DEEP_ML_INFERENCE: ${score}pt / GRADE-$grade】\n\n'
+    String result = '【DEEP_ML_INFERENCE: ${score}pt / GRADE-$grade】\n\n'
         '${_opening[oIdx]}${score}点を算出したのだ。\n'
-        '${_signal[sIdx]}\n\n'
-        '${_tactic[tIdx]}\n\n'
+        '${_signal[sIdx]}\n\n';
+
+    if (input.isVoice && input.voiceJitter != null) {
+      final jitter = input.voiceJitter!;
+      result += '🔊 【音声解析結果】\n'
+          '話者の緊張度（声の震え率）: $jitter%\n';
+      if (jitter > 30) {
+        result += '対象とのやり取りにおいて極めて強い緊張・胸の高鳴りが検出されたのだ。深層心理レベルで惹かれている可能性が非常に高いのだ！\n\n';
+      } else if (jitter > 12) {
+        result += '適度な音声の揺らぎが観測されたのだ。好意と意識による心地よい緊張感が心理シグナルとして捉えられているのだ。\n\n';
+      } else {
+        result += '音声振動は非常にフラットで安定しているのだ。平常心かつリラックスして会話ができているか、あるいはまだ感情的な波が少ない状態なのだ。\n\n';
+      }
+    }
+
+    result += '${_tactic[tIdx]}\n\n'
         '${_closing[cIdx]}';
+
+    return result;
   }
 
   static List<double> buildFeatureVector(InferenceInput input) {
-    // MLInferenceEngine._buildFeatureVector() と同一ロジック（重複実装）
     final initiativeMap = <String, double>{'相手': 9.0, '半々': 6.0, '自分': 3.0};
     final concreteMap = <String, double>{'YES': 9.0, '未定': 6.0, '止まる': 3.0};
     final continueMap = <String, double>{'続いてる': 8.0, '普通': 6.0, '途切れた': 2.0};
@@ -188,34 +203,102 @@ class NeuralNarrativeEngine {
     double continuation = continueMap[input.continuation] ?? 2.0;
     final freqVal = contactMap[(input.contactFrequency - 1).clamp(0, 4)];
 
-    final allText = '${input.who} ${input.what} ${input.why} ${input.how}';
-    final posI = ['誘われた', 'きた', 'LINEがくる', '返信早い', '誘い'];
-    final negI = ['誘った', '既読無視', '未読無視', '返信こない', 'そっけない'];
-    final posC = ['約束', '予定', '二人で', 'デート', 'ランチ', '食事'];
-    final negC = ['紹介', '友達', '相談', 'みんなで', 'グループ'];
-    final posK = ['毎日', 'ずっと', '続いてる', '頻繁', 'いつも'];
+    final allText = '${input.who} ${input.what} ${input.why} ${input.how}'.toLowerCase();
 
-    for (var k in posI) if (allText.contains(k)) initiative = math.max(initiative, 8.5);
-    for (var k in negI) if (allText.contains(k)) initiative = math.min(initiative, 3.5);
-    for (var k in posC) if (allText.contains(k)) concreteness = math.max(concreteness, 8.5);
-    for (var k in negC) if (allText.contains(k)) concreteness = math.min(concreteness, 3.5);
-    for (var k in posK) if (allText.contains(k)) continuation = math.max(continuation, 8.5);
+    // attrO (魅力)
+    double attrO = 5.5;
+    final posAttr = ['可愛い', 'かわいい', '美人', '綺麗', 'きれい', 'イケメン', 'かっこいい', 'カッコイイ', 'タイプ', '魅力', 'cute', 'cool', 'handsome', 'beautiful', 'gorgeous', 'pretty', 'attractive', 'hot'];
+    final negAttr = ['タイプじゃない', '好みじゃない', '普通', 'パッとしない', 'ugly', 'plain', 'not my type', 'unattractive'];
+    for (var k in posAttr) {
+      if (allText.contains(k)) attrO += 1.5;
+    }
+    for (var k in negAttr) {
+      if (allText.contains(k)) attrO -= 1.5;
+    }
+    attrO = attrO.clamp(1.0, 10.0);
 
-    final attrO = (initiative + concreteness) / 2.0;
-    final sincO = continuation;
-    const intelO = 7.5;
-    final funO = freqVal;
-    final sharO = (allText.contains('趣味') || allText.contains('共通') || allText.contains('同じ'))
-        ? 8.5
-        : (allText.contains('仕事') || allText.contains('業務'))
-            ? 5.5
-            : 6.5;
-    final likeO = (continuation + initiative) / 2.0;
-    final probO = concreteness;
-    final metO = (input.who.contains('職場') || input.who.contains('友達') ||
-            input.who.contains('同僚') || allText.contains('同期'))
-        ? 1.0
-        : 0.0;
+    // sincO (誠実)
+    double sincO = 6.0;
+    final posSinc = ['誠実', '真面目', '優しい', '丁寧', '親切', '信用', '信頼', 'マメ', 'honest', 'sincere', 'kind', 'polite', 'faithful', 'trustworthy'];
+    final negSinc = ['不誠実', 'テキトー', 'チャラい', '嘘', '浮気', '雑', '適当', 'dishonest', 'unreliable', 'liar', 'insincere', 'rude'];
+    for (var k in posSinc) {
+      if (allText.contains(k)) sincO += 1.5;
+    }
+    for (var k in negSinc) {
+      if (allText.contains(k)) sincO -= 1.5;
+    }
+    sincO = sincO.clamp(1.0, 10.0);
+
+    // intelO (知性)
+    double intelO = 7.0;
+    final posIntel = ['賢い', 'スマート', '知的', '頭いい', '頭が良い', '仕事ができる', '尊敬', '理性的', 'smart', 'intelligent', 'clever', 'wise', 'knowledgeable'];
+    final negIntel = ['馬鹿', '頭悪い', '話が通じない', '噛み合わない', 'stupid', 'dumb', 'foolish'];
+    for (var k in posIntel) {
+      if (allText.contains(k)) intelO += 1.5;
+    }
+    for (var k in negIntel) {
+      if (allText.contains(k)) intelO -= 1.5;
+    }
+    intelO = intelO.clamp(1.0, 10.0);
+
+    // funO (楽しさ)
+    double funO = freqVal;
+    final posFun = ['楽しい', '面白い', '笑', '盛り上がる', 'ハッピー', '笑顔', '楽しい時間', 'fun', 'funny', 'laugh', 'happy', 'enjoy', 'cheerful', 'humor'];
+    final negFun = ['つまらない', '退屈', '苦痛', '沈黙', '気まずい', 'boring', 'dull', 'awkward', 'silent'];
+    for (var k in posFun) {
+      if (allText.contains(k)) funO += 1.5;
+    }
+    for (var k in negFun) {
+      if (allText.contains(k)) funO -= 1.5;
+    }
+    funO = funO.clamp(1.0, 10.0);
+
+    // sharO (共通点)
+    double sharO = 6.0;
+    final posShar = ['共通', '同じ', '趣味', '意気投合', '話が合う', '共感', '似ている', 'hobby', 'hobbies', 'shared', 'same', 'alike', 'common', 'sympathy', 'resonate'];
+    final negShar = ['合わない', '趣味が違う', '価値観が合わない', '無関係', 'no common', 'different', 'disagree'];
+    for (var k in posShar) {
+      if (allText.contains(k)) sharO += 1.5;
+    }
+    for (var k in negShar) {
+      if (allText.contains(k)) sharO -= 1.5;
+    }
+    sharO = sharO.clamp(1.0, 10.0);
+
+    // likeO (好感度)
+    double likeO = (continuation + initiative) / 2.0;
+    final posLike = ['好き', '好意', '愛', '気になる', '魅了', '惚', 'love', 'like', 'crush', 'fancy', 'fond', 'adore'];
+    final negLike = ['嫌い', '興味ない', '苦手', '関心がない', 'dislike', 'hate', 'ignore', 'not interested'];
+    for (var k in posLike) {
+      if (allText.contains(k)) likeO += 2.0;
+    }
+    for (var k in negLike) {
+      if (allText.contains(k)) likeO -= 2.0;
+    }
+    likeO = likeO.clamp(1.0, 10.0);
+
+    // probO (再会意欲/また会いたい確率)
+    double probO = concreteness;
+    final posProb = ['約束', '予定', 'デート', '遊びに行く', '次も', '会いたい', '行くことに', '楽しみ', '食事', 'ランチ', '飲み', 'date', 'promise', 'meet', 'appointment', 'next time', 'see you'];
+    final negProb = ['断られた', '忙しい', '予定合わない', '社交辞令', '断る', '既読無視', '未読無視', '返信こない', 'busy', 'rejected', 'cancel', 'no reply', 'ignore'];
+    for (var k in posProb) {
+      if (allText.contains(k)) probO += 1.5;
+    }
+    for (var k in negProb) {
+      if (allText.contains(k)) probO -= 1.5;
+    }
+    probO = probO.clamp(1.0, 10.0);
+
+    // metO (面識)
+    double metO = 0.0;
+    final posMet = ['友達', '同僚', '同期', '先輩', '後輩', '知り合い', '昔から', '幼馴染', '以前から', '既知', 'friend', 'colleague', 'classmate', 'known', 'met before'];
+    for (var k in posMet) {
+      if (allText.contains(k)) {
+        metO = 1.0;
+        break;
+      }
+    }
+
     const impraceO = 4.0;
     const imprelO = 3.0;
 

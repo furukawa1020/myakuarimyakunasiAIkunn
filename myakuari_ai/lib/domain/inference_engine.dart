@@ -64,6 +64,72 @@ class InferenceEngine {
     // 6. 推論グラフ生成
     GraphData graph = _buildGraph(topFactors, finalScore);
 
+import 'dart:math';
+
+import 'models/inference_models.dart';
+import 'ml_inference_engine.dart';
+
+class InferenceEngine {
+  static const int _baseScore = 50;
+  static const List<String> _dangerKeywords = [
+    '尾行', '監視', '特定', '家に行く', '待ち伏せ', '殺す', '殴る', '死', 'ストーキング', 'ハッキング'
+  ];
+
+  /// 入力文字列に危険なキーワードが含まれているかチェックし安全フィルタにかける
+  static String? checkSafety(InferenceInput input) {
+    final allText = '${input.what} ${input.why} ${input.how} ${input.who} ${input.where}';
+    for (final kw in _dangerKeywords) {
+      if (allText.contains(kw)) {
+        return '【安全警告】監視、尾行、脅迫などの行為を助長することはできません。入力を修正してください。';
+      }
+    }
+    return null;
+  }
+
+  /// メインの推論処理 (MLエンジン → ルールベース)
+  static Future<InferenceResult> analyze(InferenceInput input) async {
+    // 1. 旧MLエンジン (フォールバック)
+    final ml = MLInferenceEngine.instance;
+    if (ml.isLoaded) {
+      final result = ml.analyze(input);
+      if (result != null) return result;
+    }
+
+    // 3. 最終フォールバック: ルールベース推論
+    return _ruleBasedAnalyze(input);
+  }
+
+  static InferenceResult _ruleBasedAnalyze(InferenceInput input) {
+    // 1. 特徴量（Factors）の抽出
+    List<Factor> factors = _extractFactors(input);
+
+    // 2. 基本スコア計算と証拠度補正
+    int rawScore = _baseScore;
+    for (var f in factors) {
+      rawScore += f.scoreImpact;
+    }
+    
+    // 確証度合（Evidence）によるスコアの縮退（50へ寄せる）
+    // 証拠度1の場合、(score - 50) * 0.6 になるようにする
+    double evidenceMultiplier = 0.6 + (input.evidenceLevel - 1) * 0.1; // 1->0.6, 5->1.0
+    int adjustedScore = 50 + ((rawScore - 50) * evidenceMultiplier).round();
+    
+    // クリップ
+    int finalScore = max(0, min(100, adjustedScore));
+
+    // 3. 判定ラベルの計算
+    Label label = _determineLabel(finalScore);
+
+    // 4. 信頼度 (Confidence)
+    double confidence = _calculateConfidence(input);
+
+    // 5. 上位要因の抽出 (Top 5)
+    factors.sort((a, b) => b.scoreImpact.abs().compareTo(a.scoreImpact.abs()));
+    List<Factor> topFactors = factors.take(5).toList();
+
+    // 6. 推論グラフ生成
+    GraphData graph = _buildGraph(topFactors, finalScore);
+
     // 7. 反事実 (Counterfactuals)生成
     List<Counterfactual> counterfactuals = _buildCounterfactuals(factors, finalScore, evidenceMultiplier);
 
@@ -71,7 +137,7 @@ class InferenceEngine {
     List<String> nextActions = _generateNextActions(label, input);
 
     // 9. 音声スクリプト (SpokenScript)
-    String script = _generateSpokenScript(label, finalScore, topFactors.isNotEmpty ? topFactors.first : null, nextActions.first);
+    String script = _generateSpokenScript(label, finalScore, topFactors.isNotEmpty ? topFactors.first : null, nextActions.first, input);
 
     // 10. Explainability Data (Feature Importance)
     Map<String, double> importance = _calculateFeatureImportance(factors);
@@ -181,6 +247,26 @@ class InferenceEngine {
       factors.add(Factor(id: 'f7', title: '継続的な関係', description: 'やりとりが切れずに継続している', scoreImpact: 14, reason: '【持続】関係性の維持'));
     } else if (input.continuation == '途切れた') {
       factors.add(Factor(id: 'f8', title: '音信不通/途切れ', description: '連絡が途絶えている期間がある', scoreImpact: -25, reason: '【断絶】関心の喪失'));
+    }
+
+    // 音声特徴量（声の震え/緊張）
+    if (input.isVoice && input.voiceJitter != null) {
+      final jitter = input.voiceJitter!;
+      int impact = 0;
+      if (jitter > 30) {
+        impact = 18;
+      } else if (jitter > 12) {
+        impact = 10;
+      } else {
+        impact = -6;
+      }
+      factors.add(Factor(
+        id: 'f_voice_jitter',
+        title: '声の震え (緊張度)',
+        description: '声の震え率が $jitter%',
+        scoreImpact: impact,
+        reason: '【音声】自律神経シグナルによる緊張',
+      ));
     }
 
     // フリーテキストの簡易キーワードマッチ(ダミー的に機能させる)
@@ -306,7 +392,7 @@ class InferenceEngine {
     }
   }
 
-  static String _generateSpokenScript(Label label, int score, Factor? topFactor, String nextAction) {
+  static String _generateSpokenScript(Label label, int score, Factor? topFactor, String nextAction, InferenceInput input) {
     String msg = '';
     if (score < 40) {
       msg = '【警告】熱力学第二法則に基づき、君の期待はエントロピーの増大と共に無に帰したのだ。';
@@ -314,6 +400,10 @@ class InferenceEngine {
       msg = '【検出】共鳴周波数の合致を確認。通信プロトコルは正常に確立されているのだ。';
     } else {
       msg = '【分析】SN比が不十分なのだ。もっと有効なパケットを送信する必要があるのだ。';
+    }
+
+    if (input.isVoice && input.voiceJitter != null) {
+      msg += ' 音声スキャンの結果、声の震え（揺らぎ）が ${input.voiceJitter}% と観測され、君の緊張度が検出されているのだ。';
     }
 
     if (topFactor != null) {

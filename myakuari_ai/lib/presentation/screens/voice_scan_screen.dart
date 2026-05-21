@@ -4,6 +4,8 @@ import 'dart:async';
 import 'wizard_screen.dart';
 import '../theme.dart';
 import '../../domain/web_audio_interop.dart';
+import 'loading_screen.dart';
+import '../../domain/models/inference_models.dart';
 
 class VoiceScanScreen extends StatefulWidget {
   const VoiceScanScreen({super.key});
@@ -43,14 +45,110 @@ class _VoiceScanScreenState extends State<VoiceScanScreen> {
     _pollTimer?.cancel();
     _audio.stopScan();
     HapticFeedback.heavyImpact();
+    
+    // 音声テキストと音響特徴量からInferenceInputを自動構築
+    final input = _parseInputFromText(text, _audioState);
+    
     if (mounted) {
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(
-          builder: (_) => WizardScreen(initialText: text.isNotEmpty ? text : null),
+          builder: (_) => LoadingScreen(input: input),
         ),
       );
     }
+  }
+
+  InferenceInput _parseInputFromText(String text, AudioScanState s) {
+    final lowerText = text.toLowerCase();
+
+    // 1. Who (関係性)
+    String who = '相手';
+    if (lowerText.contains('先輩') || lowerText.contains('senpai')) {
+      who = '先輩';
+    } else if (lowerText.contains('後輩') || lowerText.contains('kouhai')) {
+      who = '後輩';
+    } else if (lowerText.contains('同僚') || lowerText.contains('colleague') || lowerText.contains('同期')) {
+      who = '同僚';
+    } else if (lowerText.contains('友達') || lowerText.contains('friend')) {
+      who = '友達';
+    } else if (lowerText.contains('好きな人') || lowerText.contains('crush') || lowerText.contains('彼') || lowerText.contains('彼女')) {
+      who = '気になる人';
+    }
+
+    // 2. Where (文脈・場所)
+    String where = 'LINE';
+    if (lowerText.contains('職場') || lowerText.contains('学校') || lowerText.contains('office') || lowerText.contains('school')) {
+      where = '職場/学校';
+    } else if (lowerText.contains('飲み') || lowerText.contains('居酒屋') || lowerText.contains('bar') || lowerText.contains('drinking')) {
+      where = '飲み会';
+    } else if (lowerText.contains('カフェ') || lowerText.contains('食事') || lowerText.contains('デート') || lowerText.contains('cafe') || lowerText.contains('dinner')) {
+      where = '対面でのデート';
+    }
+
+    // 3. When (時期)
+    String when = '今日';
+    if (lowerText.contains('昨日') || lowerText.contains('yesterday')) {
+      when = '昨日';
+    } else if (lowerText.contains('先週') || lowerText.contains('last week')) {
+      when = '先週';
+    } else if (lowerText.contains('最近') || lowerText.contains('recently')) {
+      when = '今週';
+    }
+
+    // 4. Initiative (主導権)
+    String initiative = '半々';
+    if (lowerText.contains('誘われた') || lowerText.contains('きた') || lowerText.contains('返ってきた') || lowerText.contains('invited me') || lowerText.contains('asked me out')) {
+      initiative = '相手';
+    } else if (lowerText.contains('誘った') || lowerText.contains('送った') || lowerText.contains('話しかけた') || lowerText.contains('i invited') || lowerText.contains('i asked')) {
+      initiative = '自分';
+    }
+
+    // 5. Concreteness (具体性)
+    String concreteness = '未定';
+    if (lowerText.contains('約束') || lowerText.contains('行くことに') || lowerText.contains('決まった') || lowerText.contains('promised') || lowerText.contains('decided to go')) {
+      concreteness = 'YES';
+    } else if (lowerText.contains('流れた') || lowerText.contains('断られた') || lowerText.contains('忙しい') || lowerText.contains('canceled') || lowerText.contains('busy')) {
+      concreteness = '止まる';
+    }
+
+    // 6. Continuation (継続性)
+    String continuation = '普通';
+    if (lowerText.contains('毎日') || lowerText.contains('続いてる') || lowerText.contains('ずっとながれてる') || lowerText.contains('everyday') || lowerText.contains('keep talking')) {
+      continuation = '続いてる';
+    } else if (lowerText.contains('途切れた') || lowerText.contains('既読無視') || lowerText.contains('未読無視') || lowerText.contains('こない') || lowerText.contains('no reply') || lowerText.contains('ignored')) {
+      continuation = '途切れた';
+    }
+
+    // 7. Contact Frequency (連絡頻度)
+    int contactFrequency = 3;
+    if (lowerText.contains('毎日') || lowerText.contains('常に') || lowerText.contains('always') || lowerText.contains('constantly')) {
+      contactFrequency = 5;
+    } else if (lowerText.contains('よく') || lowerText.contains('頻繁に') || lowerText.contains('often')) {
+      contactFrequency = 4;
+    } else if (lowerText.contains('たまに') || lowerText.contains('sometimes')) {
+      contactFrequency = 2;
+    } else if (lowerText.contains('ほとんどない') || lowerText.contains('めったに') || lowerText.contains('rarely')) {
+      contactFrequency = 1;
+    }
+
+    return InferenceInput(
+      who: who,
+      what: text.isNotEmpty ? text : '音声での近況報告',
+      when: when,
+      where: where,
+      why: '音声から自動解析された心理状態および発言データ',
+      how: text,
+      contactFrequency: contactFrequency,
+      initiative: initiative,
+      concreteness: concreteness,
+      continuation: continuation,
+      evidenceLevel: 4,
+      voiceRms: s.rms,
+      voiceJitter: s.jitter,
+      voiceDominantFreqHz: s.dominantFreqHz,
+      isVoice: true,
+    );
   }
 
   @override
