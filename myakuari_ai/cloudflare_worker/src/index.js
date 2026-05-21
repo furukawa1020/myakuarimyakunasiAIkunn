@@ -133,7 +133,7 @@ export default {
     // ================================================================
     const score = url.searchParams.get('score') || '50';
     const label = url.searchParams.get('label') || 'ANALYZING...';
-    const color = parseInt(score) > 70 ? "'#00FF00'" : (parseInt(score) < 30 ? "'#FF0000'" : "'#FFD700'");
+    const color = parseInt(score) > 70 ? '#00FF00' : (parseInt(score) < 30 ? '#FF0000' : '#FFD700');
 
     const chartConfig = {
       type: 'radialGauge',
