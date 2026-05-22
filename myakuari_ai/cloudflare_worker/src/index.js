@@ -172,7 +172,7 @@ export default {
   <h1>SYSTEM_DIAGNOSTIC: ${score}%</h1>
   <p style="color:#fff">LABEL: ${decodeURIComponent(label)}</p>
   <img src="${imageUrl}" alt="診断結果グラフ">
-  <a href="https://your-app-url.pages.dev">▶ 自分も診断する</a>
+  <a href="https://myakuarimyakunasiaikunn.github.io/myakuarimyakunasiAIkunn/">▶ 自分も診断する</a>
 </body>
 </html>`;
 

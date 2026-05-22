@@ -124,7 +124,7 @@ class HomeScreen extends StatelessWidget {
                             HapticFeedback.heavyImpact();
                             Navigator.push(context, MaterialPageRoute(builder: (_) => const WizardScreen()));
                           },
-                          child: const Text('通常診断を開始する'),
+                          child: const Text('テキスト入力で診断する'),
                         ),
                       ),
                       const SizedBox(height: 12),
@@ -139,7 +139,7 @@ class HomeScreen extends StatelessWidget {
                             side: const BorderSide(color: Color(0xFF00FFFF)),
                             foregroundColor: const Color(0xFF00FFFF),
                           ),
-                          child: const Text('音声診断を開始する (声で入力)'),
+                          child: const Text('🎙 音声で診断する（状況を話すだけ！）'),
                         ),
                       ),
                       const SizedBox(height: 20),

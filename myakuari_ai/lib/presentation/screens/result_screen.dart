@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter/foundation.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../domain/models/inference_models.dart';
 import '../widgets/character_view.dart';
@@ -65,13 +64,19 @@ class _ResultScreenState extends State<ResultScreen> {
 
   Future<void> _captureAndShare() async {
     try {
-      final workerUrl = kDebugMode
-          ? 'http://localhost:8787'
-          : 'https://myakuari-ogp-generator.myakuarimyakunasiaikunn.workers.dev';
-      final shareUrl = '$workerUrl?score=$_simulatedScore&label=${Uri.encodeComponent(widget.result.labelText)}';
-      final text = '【脈アリ！？脈ナシ！？教えて！AI君：診断結果】\n私の絶望スコアは ${_simulatedScore}% でした。\n\n詳細な分析結果はこちら:\n$shareUrl\n\n#恋愛診断AI君 #ずんだもん #EdgeTransformer';
-      
-      final xIntentUrl = 'https://x.com/intent/tweet?text=${Uri.encodeComponent(text)}';
+      const workerBaseUrl = 'https://myakuari-ogp-generator.myakuarimyakunasiaikunn.workers.dev';
+      // labelはWorkerのqueryパラメータとして1回だけエンコード
+      final shareUrl = '$workerBaseUrl?score=$_simulatedScore&label=${Uri.encodeComponent(widget.result.labelText)}';
+      // ツイートテキストはshareUrlをそのまま（エンコードなし）で埋め込み、
+      // xIntentUrlを作る際にtext全体を1回だけエンコードする
+      final tweetText =
+          '【脈アリ！？脈ナシ！？教えて！AI君：診断結果】\n'
+          '私の絶望スコアは ${_simulatedScore}% でした。\n\n'
+          '詳細な分析結果はこちら:\n'
+          '$shareUrl\n\n'
+          '#恋愛診断AI君 #ずんだもん #EdgeTransformer';
+
+      final xIntentUrl = 'https://x.com/intent/tweet?text=${Uri.encodeComponent(tweetText)}';
       WebAudioInterop.openNewTab(xIntentUrl);
     } catch (e) {
       debugPrint('Share Error: $e');
