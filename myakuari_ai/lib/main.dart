@@ -7,6 +7,7 @@ import 'domain/ml_inference_engine.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  print('App build version: 2026-05-22 v3');
   
   // エンジンの初期化
   await MLInferenceEngine.instance.load();
