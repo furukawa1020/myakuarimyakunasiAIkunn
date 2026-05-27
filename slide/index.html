@@ -1,0 +1,1291 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>教えて！AI君 - プレゼンテーション・デモ</title>
+  
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;700&family=Noto+Sans+JP:wght@300;400;500;700&family=Outfit:wght@300;400;600;800&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+
+  <style>
+    :root {
+      --bg-color: #06050C;
+      --card-bg: rgba(20, 18, 38, 0.4);
+      --border-color: rgba(255, 255, 255, 0.06);
+      --text-main: #F3F1FB;
+      --text-sub: #8B87A5;
+      
+      --accent-pink: #FF2E93;
+      --accent-cyan: #00F0FF;
+      --accent-green: #39FF14;
+      --accent-zunda: #80F41B;
+      
+      --glow-pink: rgba(255, 46, 147, 0.15);
+      --glow-cyan: rgba(0, 240, 255, 0.15);
+      --glow-zunda: rgba(128, 244, 27, 0.15);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background-color: var(--bg-color);
+      color: var(--text-main);
+      font-family: 'Inter', 'Noto Sans JP', sans-serif;
+      min-height: 100vh;
+      overflow-x: hidden;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+    }
+
+    /* Background Aesthetics */
+    .grid-overlay {
+      position: absolute;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background-image: 
+      	linear-gradient(rgba(255, 255, 255, 0.015) 1px, transparent 1px),
+      	linear-gradient(90deg, rgba(255, 255, 255, 0.015) 1px, transparent 1px);
+      background-size: 40px 40px;
+      z-index: 1;
+      pointer-events: none;
+    }
+
+    .glow-orb-1 {
+      position: absolute;
+      top: -200px;
+      left: -100px;
+      width: 600px;
+      height: 600px;
+      border-radius: 50%;
+      background: radial-gradient(circle, var(--glow-pink) 0%, transparent 70%);
+      z-index: 0;
+      pointer-events: none;
+      filter: blur(40px);
+    }
+
+    .glow-orb-2 {
+      position: absolute;
+      bottom: -150px;
+      right: -100px;
+      width: 700px;
+      height: 700px;
+      border-radius: 50%;
+      background: radial-gradient(circle, var(--glow-cyan) 0%, transparent 70%);
+      z-index: 0;
+      pointer-events: none;
+      filter: blur(50px);
+    }
+
+    /* Presentation Header & Progress */
+    header {
+      position: relative;
+      z-index: 10;
+      padding: 24px 48px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid var(--border-color);
+      background: rgba(6, 5, 12, 0.6);
+      backdrop-filter: blur(12px);
+    }
+
+    .logo {
+      font-family: 'Outfit', sans-serif;
+      font-weight: 800;
+      font-size: 1.5rem;
+      letter-spacing: -0.5px;
+      background: linear-gradient(135deg, var(--text-main) 30%, var(--text-sub) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .logo span {
+      background: linear-gradient(135deg, var(--accent-cyan), var(--accent-zunda));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .controls-top {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+    }
+
+    .audio-mode-selector {
+      display: flex;
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 3px;
+    }
+
+    /* Progress bar */
+    .progress-container {
+      position: absolute;
+      bottom: -2px;
+      left: 0;
+      width: 100%;
+      height: 3px;
+      background: rgba(255, 255, 255, 0.05);
+      z-index: 11;
+    }
+
+    .progress-bar {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, var(--accent-cyan), var(--accent-zunda));
+      transition: width 0.1s linear;
+    }
+
+    /* Slide System Layout */
+    main {
+      flex: 1;
+      display: grid;
+      grid-template-columns: 1.1fr 0.9fr;
+      position: relative;
+      z-index: 5;
+      padding: 40px 60px;
+      gap: 40px;
+      align-items: center;
+      max-width: 1600px;
+      margin: 0 auto;
+      width: 100%;
+    }
+
+    /* Left Side: Dynamic Graphic/Presentation Content */
+    .content-area {
+      height: 100%;
+      min-height: 520px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      padding-right: 20px;
+    }
+
+    .slide-meta {
+      font-family: 'Outfit', sans-serif;
+      font-size: 0.9rem;
+      color: var(--accent-cyan);
+      letter-spacing: 2px;
+      margin-bottom: 12px;
+      font-weight: 600;
+      text-transform: uppercase;
+    }
+
+    .slide-title {
+      font-size: 2.6rem;
+      font-weight: 700;
+      line-height: 1.25;
+      margin-bottom: 28px;
+      letter-spacing: -0.5px;
+      background: linear-gradient(to right, #FFFFFF 60%, #CBC7E6 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .slide-body {
+      color: var(--text-sub);
+      font-size: 1.1rem;
+      line-height: 1.7;
+      margin-bottom: 32px;
+    }
+
+    .points-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .points-list li {
+      display: flex;
+      align-items: flex-start;
+      gap: 14px;
+      font-size: 1.05rem;
+      color: var(--text-main);
+    }
+
+    .points-list li::before {
+      content: "→";
+      color: var(--accent-zunda);
+      font-weight: bold;
+    }
+
+    .points-list li span.highlight {
+      color: var(--accent-cyan);
+      font-weight: 500;
+    }
+
+    /* Right Side: Zundamon Illustration and Speech Bubble */
+    .visual-area {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+    }
+
+    .zundamon-container {
+      position: relative;
+      width: 320px;
+      height: 380px;
+      display: flex;
+      align-items: flex-end;
+      justify-content: center;
+    }
+
+    .zundamon-img {
+      max-width: 100%;
+      max-height: 100%;
+      object-fit: contain;
+      z-index: 2;
+      filter: drop-shadow(0 10px 25px rgba(0, 0, 0, 0.4));
+      transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+
+    .zundamon-aura {
+      position: absolute;
+      bottom: 20px;
+      width: 220px;
+      height: 220px;
+      border-radius: 50%;
+      background: radial-gradient(circle, var(--glow-zunda) 0%, transparent 70%);
+      z-index: 1;
+      animation: pulse 4s infinite alternate;
+    }
+
+    /* Speech Bubble (Zundamon Speak) */
+    .speech-bubble {
+      width: 100%;
+      max-width: 460px;
+      background: rgba(20, 18, 38, 0.65);
+      border: 1px solid var(--border-color);
+      border-radius: 16px;
+      padding: 24px;
+      position: relative;
+      margin-top: 24px;
+      z-index: 3;
+      backdrop-filter: blur(16px);
+      box-shadow: 
+        0 10px 30px rgba(0, 0, 0, 0.3),
+        inset 0 1px 1px rgba(255, 255, 255, 0.05);
+      min-height: 120px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+
+    .speech-bubble::before {
+      content: "";
+      position: absolute;
+      top: -12px;
+      left: 50%;
+      transform: translateX(-50%);
+      border-width: 0 12px 12px 12px;
+      border-style: solid;
+      border-color: transparent transparent var(--border-color) transparent;
+    }
+
+    .speech-bubble::after {
+      content: "";
+      position: absolute;
+      top: -11px;
+      left: 50%;
+      transform: translateX(-50%);
+      border-width: 0 12px 12px 12px;
+      border-style: solid;
+      border-color: transparent transparent rgba(20, 18, 38, 0.9) transparent;
+    }
+
+    .bubble-speaker {
+      font-family: 'Outfit', sans-serif;
+      font-size: 0.8rem;
+      font-weight: 700;
+      color: var(--accent-zunda);
+      letter-spacing: 1px;
+      margin-bottom: 8px;
+      text-transform: uppercase;
+    }
+
+    .bubble-text {
+      font-size: 1rem;
+      line-height: 1.6;
+      color: var(--text-main);
+      min-height: 48px;
+    }
+
+    /* Footer / Manual Navigation */
+    footer {
+      position: relative;
+      z-index: 10;
+      padding: 20px 48px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-top: 1px solid var(--border-color);
+      background: rgba(6, 5, 12, 0.4);
+    }
+
+    .slide-counter {
+      font-family: 'Outfit', sans-serif;
+      font-size: 0.9rem;
+      color: var(--text-sub);
+    }
+
+    .slide-counter span {
+      color: var(--text-main);
+      font-weight: 600;
+    }
+
+    .nav-controls {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+    }
+
+    .btn-nav {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid var(--border-color);
+      color: var(--text-main);
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s ease;
+    }
+
+    .btn-nav:hover {
+      background: rgba(255, 255, 255, 0.08);
+      border-color: rgba(255, 255, 255, 0.15);
+    }
+
+    .btn-nav:disabled {
+      opacity: 0.3;
+      cursor: not-allowed;
+    }
+
+    .btn-play-pause {
+      background: var(--text-main);
+      color: var(--bg-color);
+      border: none;
+      padding: 10px 24px;
+      border-radius: 22px;
+      font-weight: 600;
+      font-size: 0.85rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.2s ease;
+      box-shadow: 0 4px 12px rgba(255, 255, 255, 0.1);
+    }
+
+    .btn-play-pause:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 6px 16px rgba(255, 255, 255, 0.2);
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 4px 10px;
+      border-radius: 6px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      margin-bottom: 12px;
+    }
+
+    .badge-pink {
+      background: rgba(255, 46, 147, 0.1);
+      border: 1px solid rgba(255, 46, 147, 0.2);
+      color: var(--accent-pink);
+    }
+
+    .badge-cyan {
+      background: rgba(0, 240, 255, 0.1);
+      border: 1px solid rgba(0, 240, 255, 0.2);
+      color: var(--accent-cyan);
+    }
+
+    .badge-zunda {
+      background: rgba(128, 244, 27, 0.1);
+      border: 1px solid rgba(128, 244, 27, 0.2);
+      color: var(--accent-zunda);
+    }
+
+    /* Evaluation Points Box for Corporate Awards */
+    .eval-box {
+      margin-top: 24px;
+      background: linear-gradient(135deg, rgba(255, 46, 147, 0.03), rgba(0, 240, 255, 0.03));
+      border: 1px dashed rgba(0, 240, 255, 0.25);
+      border-radius: 12px;
+      padding: 16px 20px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+      position: relative;
+    }
+    
+    .eval-box::before {
+      content: "◆ 実装アーキテクチャと検証アプローチ";
+      position: absolute;
+      top: -10px;
+      left: 16px;
+      font-size: 0.7rem;
+      font-weight: 700;
+      color: var(--accent-cyan);
+      background: #06050C;
+      padding: 2px 8px;
+      border: 1px solid rgba(0, 240, 255, 0.3);
+      border-radius: 4px;
+      letter-spacing: 0.5px;
+    }
+    
+    .eval-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-top: 8px;
+    }
+    
+    .eval-list li {
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+      font-size: 0.85rem;
+      color: var(--text-main);
+      line-height: 1.5;
+    }
+    
+    .eval-list li::before {
+      content: "◆";
+      color: var(--accent-pink);
+      font-size: 0.75rem;
+      margin-top: 1px;
+    }
+
+    /* Geeky Interactive Container inside Left Side */
+    .geek-visualizer {
+      margin-top: 24px;
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      border-radius: 12px;
+      padding: 16px;
+      font-family: 'Fira Code', 'monospace';
+      font-size: 0.8rem;
+      color: var(--accent-cyan);
+      position: relative;
+      overflow: hidden;
+      min-height: 120px;
+    }
+
+    .geek-visualizer::before {
+      content: "ENGINE DIAGNOSTIC";
+      position: absolute;
+      top: 6px; right: 12px;
+      font-size: 0.6rem;
+      color: rgba(255, 255, 255, 0.2);
+      letter-spacing: 1.5px;
+    }
+
+    /* Keyframes */
+    @keyframes pulse {
+      0% { transform: scale(0.95); opacity: 0.6; }
+      100% { transform: scale(1.05); opacity: 0.9; }
+    }
+
+    /* CSS Slide Animation classes */
+    .fade-enter {
+      opacity: 0;
+      transform: translateY(12px);
+    }
+    .fade-enter-active {
+      opacity: 1;
+      transform: translateY(0);
+      transition: opacity 0.5s ease, transform 0.5s ease;
+    }
+
+    /* Custom visual classes for slide pages */
+    .metric-flex {
+      display: flex;
+      gap: 20px;
+      margin-top: 15px;
+    }
+    .metric-card {
+      flex: 1;
+      border: 1px solid var(--border-color);
+      background: rgba(255, 255, 255, 0.02);
+      padding: 12px;
+      border-radius: 8px;
+      text-align: center;
+    }
+    .metric-value {
+      font-size: 1.8rem;
+      font-weight: 700;
+      color: var(--accent-pink);
+      font-family: 'Outfit', sans-serif;
+    }
+    .metric-label {
+      font-size: 0.75rem;
+      color: var(--text-sub);
+    }
+
+    .app-link-box {
+      margin-top: 24px;
+      background: linear-gradient(135deg, rgba(0, 240, 255, 0.05), rgba(128, 244, 27, 0.05));
+      border: 1px solid rgba(0, 240, 255, 0.2);
+      border-radius: 12px;
+      padding: 20px;
+      text-align: center;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+    }
+
+    .app-link-box a {
+      color: var(--accent-cyan);
+      text-decoration: none;
+      font-weight: 700;
+      font-size: 1.15rem;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.2s ease;
+    }
+
+    .app-link-box a:hover {
+      color: var(--accent-zunda);
+      transform: scale(1.02);
+    }
+
+    .interactive-graph-mock {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-around;
+      height: 100px;
+      border-bottom: 2px solid var(--border-color);
+      padding-bottom: 4px;
+      margin-top: 16px;
+    }
+
+    .graph-bar {
+      width: 14%;
+      background: linear-gradient(to top, var(--accent-cyan), var(--accent-zunda));
+      border-radius: 4px 4px 0 0;
+      transition: height 1s ease-in-out;
+    }
+
+    .speed-btn {
+      background: transparent;
+      border: none;
+      color: var(--text-sub);
+      font-size: 0.8rem;
+      font-weight: 600;
+      padding: 4px 12px;
+      border-radius: 14px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .speed-btn:hover {
+      color: var(--text-main);
+    }
+    .speed-btn.active {
+      background: rgba(255, 255, 255, 0.1);
+      color: var(--accent-cyan);
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+    }
+
+    .graph-bar-pink {
+      background: linear-gradient(to top, var(--accent-pink), #FF5E62);
+    }
+  </style>
+</head>
+<body>
+  <div class="grid-overlay"></div>
+  <div class="glow-orb-1"></div>
+  <div class="glow-orb-2"></div>
+
+  <!-- Header -->
+  <header>
+    <div class="logo">
+      教えて！<span>AI君</span>
+    </div>
+    
+    <div class="controls-top">
+      <div class="audio-mode-selector" style="border: 1px solid rgba(128, 244, 27, 0.3); background: rgba(128, 244, 27, 0.05);">
+        <span style="padding: 6px 12px; font-size: 0.75rem; font-weight: 600; color: var(--accent-zunda); display: flex; align-items: center; gap: 6px;">
+          <span style="width: 6px; height: 6px; border-radius: 50%; background-color: var(--accent-zunda); display: inline-block; animation: pulse 1s infinite alternate;"></span>
+          ずんだもん録音音声モード
+        </span>
+      </div>
+    </div>
+    
+    <div class="progress-container">
+      <div class="progress-bar" id="progress-bar"></div>
+    </div>
+  </header>
+
+  <!-- Main Slide Arena -->
+  <main>
+    <!-- Left: Content Card -->
+    <div class="content-area" id="content-container">
+      <!-- Injected dynamically via JS -->
+    </div>
+
+    <!-- Right: Zundamon -->
+    <div class="visual-area">
+      <div class="zundamon-container">
+        <div class="zundamon-aura"></div>
+        <img src="images/char/char_0.png" alt="ずんだもん" class="zundamon-img" id="zundamon-img">
+      </div>
+      <div class="speech-bubble">
+        <div class="bubble-speaker">Zundamon</div>
+        <div class="bubble-text" id="bubble-text"></div>
+      </div>
+    </div>
+  </main>
+
+  <!-- Footer -->
+  <footer>
+    <div class="slide-counter">
+      SLIDE <span id="current-slide-num">01</span> / <span id="total-slide-num">10</span>
+    </div>
+
+    <div class="nav-controls">
+      <div style="display: flex; align-items: center; gap: 8px; margin-right: 16px;">
+        <span style="font-size: 0.8rem; color: var(--text-sub); font-weight: 500;">再生速度:</span>
+        <div style="display: flex; background: rgba(255, 255, 255, 0.03); border: 1px solid var(--border-color); border-radius: 20px; padding: 2px;">
+          <button class="speed-btn active" data-speed="1">1.0x</button>
+          <button class="speed-btn" data-speed="2">2.0x</button>
+          <button class="speed-btn" data-speed="3">3.0x</button>
+        </div>
+      </div>
+      
+      <button class="btn-nav" id="btn-prev">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg>
+      </button>
+      
+      <button class="btn-play-pause" id="btn-play-pause">
+        <svg id="play-pause-icon" width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>
+        <span id="play-pause-text">一時停止</span>
+      </button>
+      
+      <button class="btn-nav" id="btn-next">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>
+      </button>
+    </div>
+  </footer>
+
+  <script>
+    const SLIDES = [
+      {
+        meta: "01 / Introduction",
+        badge: "課題層①：社会的損失と認知の歪み",
+        badgeClass: "badge-pink",
+        title: "「脈あり」という主観的な誤解が招く\n無謀な告白による人間関係の崩壊と損失",
+        body: "人は好意を寄せる相手に対して都合の良い認知バイアス（返信速度、視線等）を自動生成し、客観的勝算のない無謀な告白（イキ告）に走る傾向があります。心理学研究では片想い失恋率が93.0%に達することが示されており、無計画なアプローチがもたらす人間関係の破綻や個人の精神的ダメージといった社会的・精神的損失の回避が求められています。",
+        points: [
+          "無計画な告白による人間関係の破綻と精神的ダメージの予防",
+          "心理学研究（Baumeister et al., 1993）における<span class='highlight'>片想い失恋率93.0%</span>の学術的統計",
+          "主観的認知バイアスを排除し、データに基づいた合理的な意思決定を支援"
+        ],
+        evalPoints: [
+          "学術的エビデンス（Baumeister et al., 1993）に基づく失恋率93.0%の社会的課題定義",
+          "「主観的バイアス」と「客観的データ」の乖離を解消する意思決定システムの社会的必要性"
+        ],
+        speakerText: "みんな、好意を寄せた相手の態度を自分に都合よく解釈して、無謀な告白で大爆死した経験はないのだ？心理学の研究では、なんと９３パーセントの人が『情熱的に愛した相手にフラれる』という片想いの失恋を経験しているのだ。そんな悲劇的な『勘違い爆死』のない、平和でスマートな社会を作りたいと思わないのだ？",
+        charIndex: 3,
+        visualHTML: `
+          <div class="metric-flex">
+            <div class="metric-card">
+              <div class="metric-value">93.0%</div>
+              <div class="metric-label">片想い失恋率 (Baumeister, 1993)</div>
+            </div>
+            <div class="metric-card">
+              <div class="metric-value">99.8%</div>
+              <div class="metric-label">勘違い告白失敗率 (体感値)</div>
+            </div>
+          </div>
+        `
+      },
+      {
+        meta: "02 / The Social Problem",
+        badge: "課題の多重構造化",
+        badgeClass: "badge-pink",
+        title: "客観性の喪失：感情の負荷によって\n自身の合理的な判断機能が低下するメカニズム",
+        body: "他人の恋愛相談には客観的な最適解を提示できるにもかかわらず、自身の當事者問題になると合理的な判断が不可能になる現象は、心理学において「サロモンのパラドックス」として定義されています。強い感情の揺らぎが認知機能を歪め、リスク評価能力を著しく麻痺させることが原因です。",
+        points: [
+          "都合の良い兆候だけを過剰評価してしまう<span class='highlight'>確証バイアスの罠</span>",
+          "脳の処理資源が相手への執着に<span class='highlight'>100%占有</span>され、リスク計算機能が低下",
+          "多重の課題：認知の歪み、会話文脈の解釈、音声に含まれる身体の緊張度"
+        ],
+        evalPoints: [
+          "サロモンのパラドックスを応用した「当事者問題における合理性低下」の定量的モデル化",
+          "自律神経緊張度（物理音声ジッター値）と言語的特徴（文脈）の多重層的な課題アプローチ"
+        ],
+        speakerText: "恋愛相談は他人のことなら的確に答えられるのに、自分のことになるとポンコツになるのはなぜなのだ？それは脳のメモリが相手への執着にひゃくパーセント占有されて、客観的なリスク計算ができなくなるからなのだ！この脳のバグ、どうやってハックするのだ？",
+        charIndex: 8,
+        visualHTML: `
+          <div class="interactive-graph-mock">
+            <div class="graph-bar graph-bar-pink" style="height: 100%;"></div>
+            <div class="graph-bar graph-bar-pink" style="height: 85%;"></div>
+            <div class="graph-bar" style="height: 5%;"></div>
+          </div>
+          <div style="display:flex; justify-content:space-around; font-size:0.7rem; color:var(--text-sub); margin-top:8px;">
+            <span>脳内占有度 (100%)</span>
+            <span>感情の振れ幅</span>
+            <span>客観的リスク評価</span>
+          </div>
+        `
+      },
+      {
+        meta: "03 / The Solution",
+        badge: "解決策の提示",
+        badgeClass: "badge-cyan",
+        title: "意思決定支援システム：\n「教えて！AI君」による定量的な脈あり数理判定",
+        body: "当事者の主観や自己都合の認知バイアスを介在させず、生体音声データと言語情報を統合的に処理することで「脈ありの確率」を数理的に分析するシステムです。モバイルやPCのブラウザから直接マイクで入力された情報を解析し、定量的な評価結果をユーザーに提示します。",
+        points: [
+          "当事者の主観取捨選択と思い込みを完全に排除した、データ主導の客観的アドバイス",
+          "発話時の音声パラメータと言語データの双方からアプローチする多角的な分析",
+          "数理モデルが導き出すパーセンテージと分析シートの即時レポーティング"
+        ],
+        evalPoints: [
+          "ユーザーの意思決定を支援する、当事者の感情バイアスを排除した客観的数理推論システム",
+          "マイク入力からの生体音響指標と言語（NLP）トークンのクロスモーダル情報統合による高精度判定"
+        ],
+        speakerText: "だから作ったのが、この『教えて！エーアイ君』なのだ！主観やバイアスを一切挟まず、数理的な推論とリアルタイムな生体信号から『真の脈あり確率』を叩き出すのだ。客観的なエーアイに判定してもらうのが、一番確実だと思わないのだ？",
+        charIndex: 0,
+        visualHTML: `
+          <div class="geek-visualizer">
+            &gt; Initializing local inference bridge...<br>
+            &gt; AudioStream connected (Web Audio API Analyser)<br>
+            &gt; Tensor shape: [1, 10] calibrated.<br>
+            &gt; Status: READY_TO_EVALUATE
+          </div>
+        `
+      },
+      {
+        meta: "04 / Physiological & Acoustic Layer",
+        badge: "課題層②：自律神経と音響指標",
+        badgeClass: "badge-cyan",
+        title: "言葉では隠せない身体反応：\n音声ジッター値のリアルタイム抽出技術",
+        body: "人間は発話内容を制御できても、自律神経の緊張に伴う声帯の物理的な微細振動（ジッター値）を完全に抑制することはできません。Web Audio APIを用いてユーザーのマイク入力をリアルタイムで取得し、高速フーリエ変換（FFT）を適用して、声のゆらぎやゼロ交差率を抽出します。",
+        points: [
+          "Web Audio APIを用いたフロントエンド完結型の<span class='highlight'>リアルタイム高速フーリエ変換（FFT）</span>",
+          "自律神経の緊張時に、音声ジッター値が臨床的基準である<span class='highlight'>1.0%</span>を有意に超過する特性を検出",
+          "テキスト解析だけでは捉えきれない、声の物理指標に基づく客観的な緊張度測定"
+        ],
+        evalPoints: [
+          "Web Audio API を活用した、クライアントサイドでのリアルタイム高速フーリエ変換（FFT）処理",
+          "緊張度を科学的に測定する音声ジッター値（臨床的基準値1.0%超過）のリアルタイム抽出ロジック"
+        ],
+        speakerText: "言葉では嘘をつけても、声帯の物理的な震えは騙せないのだ！ウェブオーディオエーピーアイを使ってマイクからの生音声をリアルタイムに『高速フーリエ変換』し、周波数のゆらぎであるジッター値やゼロ交差率を抽出するのだ。緊張すると声のジッター値は正常時の１パーセント未満という基準値を大きく超えて不安定になるのだ。キミの声の緊張,隠し通せると思うのだ？",
+        charIndex: 1,
+        visualHTML: `
+          <div class="interactive-graph-mock">
+            <div class="graph-bar" style="height: 30%; background: var(--accent-cyan)"></div>
+            <div class="graph-bar" style="height: 65%; background: var(--accent-cyan)"></div>
+            <div class="graph-bar graph-bar-pink" style="height: 95%;"></div>
+            <div class="graph-bar" style="height: 45%; background: var(--accent-cyan)"></div>
+          </div>
+          <div style="text-align:center; font-size:0.7rem; color:var(--accent-pink); margin-top:8px; font-family:'Fira Code';">
+            Tremor Detected: ZCR spike (Jitter &gt; 1.0% clinical baseline)
+          </div>
+        `
+      },
+      {
+        meta: "05 / Cross-Modal Deep Learning",
+        badge: "モデル・データ層",
+        badgeClass: "badge-zunda",
+        title: "マルチモーダル深層学習：\n8,378件の対話ログに基づく融合モデル",
+        body: "本システムの意思決定エンジンは、コロンビア大学の実験で収集された8,378件の対話意思決定データセットを学習データとして採用しています。音声のスペクトラム特徴と言語の特徴量を、Cross-Modal Attention（CM-Transformer）層で融合させ、好意形成の相関関係を学習させています。",
+        points: [
+          "コロンビア大学の学術データセットにおける<span class='highlight'>8,378件の意思決定記録</span>を学習に採用",
+          "音声情報と言語情報の相互作用をモデリングする<span class='highlight'>Cross-Modal Attention</span>アーキテクチャ",
+          "単なるルールベースや感情辞書に頼らない、マルチモーダル深層学習による頑健な判定"
+        ],
+        evalPoints: [
+          "コロンビア大学の実験データ（8,378件の意思決定記録）を用いた高精度ディープラーニング学習",
+          "音響フレームベクトルと言語埋め込みベクトルの相互作用を捉える Cross-Modal Attention 設計"
+        ],
+        speakerText: "裏側には、コロンビア大学の学術データで学習させた、本物のマルチモーダル・ディープラーニング・モデルが動いているのだ。声の音響特徴と会話のコンテキストを、クロスアテンションという最新のトランスフォーマー技術で融合させて、真の決定境界を学習したのだ。これこそが、最先端の数理とディープラーニングの執念なのだ！",
+        charIndex: 6,
+        visualHTML: `
+          <div class="geek-visualizer" style="font-size:0.75rem; line-height:1.4;">
+            <div style="font-weight:bold; color:var(--accent-zunda); margin-bottom:4px;">Cross-Modal Attention Weights Map</div>
+            <div style="display:grid; grid-template-columns:repeat(5, 1fr); gap:4px; font-family:monospace;">
+              <div style="background:rgba(0,240,255,0.8); color:#000; padding:2px; text-align:center;">0.84</div>
+              <div style="background:rgba(0,240,255,0.4); color:#fff; padding:2px; text-align:center;">0.41</div>
+              <div style="background:rgba(255,46,147,0.7); color:#fff; padding:2px; text-align:center;">0.72</div>
+              <div style="background:rgba(0,240,255,0.1); color:#fff; padding:2px; text-align:center;">0.09</div>
+              <div style="background:rgba(128,244,27,0.9); color:#000; padding:2px; text-align:center;">0.95</div>
+            </div>
+            <div style="margin-top:6px; font-size:0.65rem; color:var(--text-sub);">[Audio Embeddings &harr; Linguistic Tokens Cross-Attention]</div>
+          </div>
+        `
+      },
+      {
+        meta: "06 / Edge WebGPU & ONNX Runtime",
+        badge: "課題層③：アーキテクチャ設計・コスト効率",
+        badgeClass: "badge-zunda",
+        title: "WebGPU＋ONNX Runtime Web：\n極限のコスト削減と無制限スケーラビリティ",
+        body: "通常の深層学習サービスは高価なクラウドGPUサーバーが不可欠であり、同時アクセス数に比例してインフラコストが急増します。本システムは、Cross-Modal Transformerモデルを4-bit量子化して2.4MBまで軽量化。ONNX Runtime WebとWebGPUを用いてクライアント側のハードウェアで推論を行うため、サーバー代は永久に0円です。",
+        points: [
+          "高価なクラウドGPUサーバーが不要で、インフラ費用を<span class='highlight'>永久に0円</span>へ削減",
+          "ユーザーの手元（エッジ）で並列処理するため、同時接続者数に依存しない<span class='highlight'>無限のスケール性</span>",
+          "推論APIの往復レイテンシを完全に排除し、<span class='highlight'>ミリ秒単位の超高速フィードバック</span>を達成"
+        ],
+        evalPoints: [
+          "ONNX Runtime Web と WebGPU 連携による、クライアントエッジ側でのGPUアクセラレーション推論",
+          "モデルの4-bit INT量子化による軽量化（2.4MB）と、サーバーインフラコスト永久0円設計"
+        ],
+        speakerText: "普通なら重いパイソンサーバーを立てるところを、ボクたちはこのモデルをオンニクス形式に出力し、４ビット量子化してブラウザに埋め込んだのだ！ウェブジーピーユーアクセラレーションとオンニクスランタイムウェブを駆使することで、キミのパソコンのグラフィックボードで直接ディープラーニング推論を回すのだ。サーバー代は永久にゼロ、プライバシーも完全保護なのだ！",
+        charIndex: 10,
+        visualHTML: `
+          <div class="geek-visualizer">
+            &gt; WebGPU Device: GPUDevice [Local GPU Accelerated]<br>
+            &gt; Loading WebGPU optimized execution provider (ORT WebGPU)...<br>
+            &gt; Session Created: cm_transformer_quant_int4.onnx (2.4 MB)<br>
+            &gt; Edge Inference execution time: 14.8 ms (100% Client-Side)
+          </div>
+        `
+      },
+      {
+        meta: "07 / Cultural & Linguistic Layer",
+        badge: "課題層④：文化と言語（アライメント）",
+        badgeClass: "badge-cyan",
+        title: "男性過大評価バイアスの補正と\n日本語特有の間接好意表現（建前）アライメント",
+        body: "心理学（Haselton & Buss, 2000）で検証されている、男性が異性の好意を過大評価するバイアス（効果量 Cohen's d = 0.68）を統計的に差し引きます。さらに、日本語特有の「建前」に代表される間接的な好意の言い回し（「一緒にいて落ち着く」等）を言語特徴量上で抽出し、文化的な表現の違いを補正します。",
+        points: [
+          "男性の特異的な認知バイアスを<span class='highlight'>効果量 Cohen's d = 0.68</span>で逆算補正",
+          "日本語のハイコンテクストな間接表現（建前）と言語ベクトルのアライメント",
+          "学術的な統計エビデンスをアルゴリズムに組み込み、判定精度を最適化"
+        ],
+        evalPoints: [
+          "心理学（Haselton & Buss, 2000）に基づき、男性特有の好意過大評価バイアス（Cohen's d = 0.68）を統計補正",
+          "「建前」や間接表現といった日本固有の言語的ハイコンテクスト特徴量アライメント処理"
+        ],
+        speakerText: "心理学で男性は女性の好意をコヘンのディーイコールれいてんろくじゅうはちもの効果量で過大評価することが知られているのだ。さらに日本語特有の間接好意表現をアテンション層で補正し、声の震えであるジッター値と文脈を『クロスモーダル・アテンション』で相互作用させることで、日本人の本音を完全にアライメントするのだ！",
+        charIndex: 5,
+        visualHTML: `
+          <div class="geek-visualizer">
+            &gt; NLP Tokenizer (ja): ["一緒", "に", "いて", "楽"]<br>
+            &gt; Bias Factor: d = 0.68 (Male Overperception) Correction Applied<br>
+            &gt; Semantic Match: likeO (latent friendliness) boosted by +1.5<br>
+            &gt; Calibrating alignment space with cross-modal parameters...
+          </div>
+        `
+      },
+      {
+        meta: "08 / Dynamically Generated OGP",
+        badge: "拡散設計・マーケティング",
+        badgeClass: "badge-pink",
+        title: "SNSを介したバイラル拡大：\nレーダーチャート付き画像のリアルタイム生成",
+        body: "ユーザーが診断結果をSNSで共有する際のエンゲージメントを高めるため、魅力・親しみやすさ・緊張度などの複数パラメータからレーダーチャートを自動作成します。QuickChart.ioのAPIと連携し、サーバー側のオーバーヘッドなしで動的なOGP画像を瞬時にレンダリングします。",
+        points: [
+          "パラメータを反映した<span class='highlight'>レーダーチャート付きOGP画像</span>を動的に生成",
+          "X（旧Twitter）等のSNSとシームレスに連携した、効率的なバイラルマーケティング設計",
+          "結果のビジュアル化によるインプレッション獲得と、サービス認知拡大の自動化"
+        ],
+        evalPoints: [
+          "QuickChart.io API を活用し、クライアントサイドのパラメータからレーダーチャート画像をリアルタイム動的生成",
+          "SNS（X/Twitter）での診断結果拡散を狙った、ゼロレイテンシでのダイナミックOGP設計"
+        ],
+        speakerText: "診断結果はエックスで即座にシェアできるのだ。その時、クイックチャートアイオーを使ってレーダーチャート付きのオージーピー画像を動的に生成してツイートに埋め込むのだ！勘違い爆死のデータをみんなで共有し合うの、絶対に面白いと思わないのだ？",
+        charIndex: 7,
+        visualHTML: `
+          <div class="metric-flex">
+            <div class="metric-card" style="border-color: var(--accent-pink)">
+              <div class="metric-value">0.1s</div>
+              <div class="metric-label">OGP Image Gen Latency</div>
+            </div>
+            <div class="metric-card" style="border-color: var(--accent-pink)">
+              <div class="metric-value">QuickChart</div>
+              <div class="metric-label">Rendering Engine</div>
+            </div>
+          </div>
+        `
+      },
+      {
+        meta: "09 / B2B Expansion & SaaS",
+        badge: "ビジネスモデルの拡張性",
+        badgeClass: "badge-zunda",
+        title: "感情データ分析SaaSとしての展開：\n採用活動（HR Tech）及び営業活動支援への応用",
+        body: "本システムに採用している「物理的な声の震え（ジッター値）と会話文脈のクロスモーダル解析」は、B2B市場において大きなポテンシャルを持ちます。採用活動における求職者の熱意定量化（HR Tech）や、営業活動における顧客のエンゲージメント（成約可能性）の可視化など、意思決定を支援するSaaSとしての展開を視野に入れています。",
+        points: [
+          "採用面接における候補者の熱意やミスマッチの早期検知（HR分野への応用）",
+          "インサイドセールスにおける顧客の興味・関心レベルの定量分析（営業支援分野への応用）",
+          "コミュニケーションデータを価値化し、組織の生産性と意思決定の精度を高めるB2B展開"
+        ],
+        evalPoints: [
+          "インサイドセールスにおける顧客 of エンゲージメント（成約確率）の音声・テキスト同時可視化技術",
+          "HR Techにおける採用面接時の求職者熱意度・ミスマッチ検出へのSaaS展開可能性"
+        ],
+        speakerText: "この『声の震えと言語の感情解析』は、ビジネスの採用面接やインサイドセールスにも横展開できるのだ。求職者の本当の志望度や、顧客の成約意欲を可視化するサースに育てる未来、一緒にやりたいと思いませんか？",
+        charIndex: 11,
+        visualHTML: `
+          <div class="metric-flex">
+            <div class="metric-card" style="border-color: var(--accent-zunda)">
+              <div class="metric-value" style="color: var(--accent-zunda)">B2B / SaaS</div>
+              <div class="metric-label">拡張ビジネスモデル</div>
+            </div>
+            <div class="metric-card" style="border-color: var(--accent-zunda)">
+              <div class="metric-value" style="color: var(--accent-zunda)">HR Tech</div>
+              <div class="metric-label">商談・面接感情スコアリング</div>
+            </div>
+          </div>
+        `
+      },
+      {
+        meta: "10 / Developer Vision",
+        badge: "開発ストーリー",
+        badgeClass: "badge-pink",
+        title: "開発の原点：制作者自身の\n「イキ告撃沈」という痛恨の原体験",
+        body: "このプロダクトが誕生したきっかけは、開発者自身が「脈ありだ！」と盲信して勢いで告白し、あまりにも悲惨にフラれた原体験にあります。その精神的苦痛と痛恨の後悔から、「自分と同じ過ちで苦しむ人を一人も出さない」という強い執念が生まれ、最新の数理モデルと音響・言語処理の技術をすべて注ぎ込む原動力となりました。",
+        points: [
+          "開発者自身の<span class='highlight'>勢い告白での大爆死（イキ告撃沈）</span>という生々しい失敗から生まれた執念",
+          "「思い込みによる悲劇を撲滅したい」という、感情の痛みから生まれた強力な開発ビジョン",
+          "技術の社会実装：個人の感情的な原体験を起点とし、エンジニアリングによって実用的で普遍的な意思決定支援ツールへと昇華"
+        ],
+        evalPoints: [
+          "開発者自身の痛烈な実体験（イキ告爆死）をエネルギーに変えた、強い共感を生むプロダクトビジョン",
+          "ローカル完結型アプリケーション（ポート 8080）へのシームレスなCTAによる体験価値の即時提供"
+        ],
+        speakerText: "説明はここまでなのだ！あとは実際に動いているデモアプリで、マイクに向かって声を吹き込んでみてほしいのだ。君の本当の脈アリ度を暴き出すのだ！ぜひ体験して、ボクたちに投票してほしいのだ！",
+        charIndex: 9,
+        visualHTML: `
+          <div class="app-link-box">
+            <a href="http://localhost:8080" target="_blank">
+              ▶ アプリケーション本体を開く (ポート 8080)
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+            </a>
+            <div style="font-size:0.75rem; color:var(--text-sub); margin-top:8px;">※ローカルホストでアプリケーションが起動している必要があります</div>
+          </div>
+        `
+      }
+    ];
+
+    let currentSlide = 0;
+    let autoPlay = true;
+    let currentDuration = 15000;
+    let currentSpeed = 1.0;
+    let progressPercent = 0;
+    let lastTimestamp = 0;
+    let progressAnimationId = null;
+    let speechAudio = null;
+    let typewriterTimeout = null;
+    let bgmAudio = null;
+
+    function initBGM() {
+      if (!bgmAudio) {
+        bgmAudio = new Audio('audio/bgm.mp3');
+        bgmAudio.loop = true;
+        bgmAudio.volume = 0.04;
+      }
+    }
+
+    function playBGM() {
+      initBGM();
+      if (bgmAudio.paused) bgmAudio.play().catch(e => console.warn("BGM blocked:", e));
+    }
+
+    function pauseBGM() {
+      if (bgmAudio && !bgmAudio.paused) bgmAudio.pause();
+    }
+
+    const container = document.getElementById('content-container');
+    const zundaImg = document.getElementById('zundamon-img');
+    const bubbleText = document.getElementById('bubble-text');
+    const slideNum = document.getElementById('current-slide-num');
+    const totalNum = document.getElementById('total-slide-num');
+    const progressBar = document.getElementById('progress-bar');
+    const btnPrev = document.getElementById('btn-prev');
+    const btnNext = document.getElementById('btn-next');
+    const btnPlayPause = document.getElementById('btn-play-pause');
+    const btnPlayPauseText = document.getElementById('play-pause-text');
+    const playPauseIcon = document.getElementById('play-pause-icon');
+
+    function init() {
+      totalNum.textContent = String(SLIDES.length).padStart(2, '0');
+      btnPrev.addEventListener('click', prevSlide);
+      btnNext.addEventListener('click', nextSlide);
+      btnPlayPause.addEventListener('click', togglePlayPause);
+      document.querySelectorAll('.speed-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          document.querySelectorAll('.speed-btn').forEach(b => b.classList.remove('active'));
+          btn.classList.add('active');
+          changePlaybackSpeed(parseFloat(btn.dataset.speed));
+        });
+      });
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'ArrowRight' || e.key === ' ') {
+          e.preventDefault();
+          nextSlide();
+        } else if (e.key === 'ArrowLeft') {
+          e.preventDefault();
+          prevSlide();
+        }
+      });
+      document.addEventListener('click', () => {
+        if (autoPlay) {
+          playBGM();
+          if (speechAudio && speechAudio.paused) {
+            speechAudio.play().catch(e => console.warn("Speech blocked:", e));
+          }
+        }
+      });
+      renderSlide(0);
+    }
+
+    function changePlaybackSpeed(speed) {
+      currentSpeed = speed;
+      if (speechAudio) {
+        speechAudio.playbackRate = speed;
+      }
+    }
+
+    function renderSlide(index) {
+      stopSpeech();
+      resetProgress();
+      
+      currentSlide = index;
+      const data = SLIDES[index];
+
+      btnPrev.disabled = index === 0;
+      btnNext.disabled = index === SLIDES.length - 1;
+      slideNum.textContent = String(index + 1).padStart(2, '0');
+
+      container.classList.remove('fade-enter-active');
+      container.classList.add('fade-enter');
+      
+      const pointsHTML = data.points.map(pt => `<li>${pt}</li>`).join('');
+      const evalHTML = data.evalPoints ? `
+        <div class="eval-box">
+          <ul class="eval-list">
+            ${data.evalPoints.map(ep => `<li>${ep}</li>`).join('')}
+          </ul>
+        </div>
+      ` : '';
+      
+      container.innerHTML = `
+        <div class="badge ${data.badgeClass}">${data.badge}</div>
+        <div class="slide-meta">${data.meta}</div>
+        <h1 class="slide-title">${data.title.replace(/\\n/g, '<br>').replace(/\n/g, '<br>')}</h1>
+        <p class="slide-body">${data.body}</p>
+        <ul class="points-list">
+          ${pointsHTML}
+        </ul>
+        ${evalHTML}
+        ${data.visualHTML || ''}
+      `;
+
+      setTimeout(() => {
+        container.classList.remove('fade-enter');
+        container.classList.add('fade-enter-active');
+      }, 50);
+
+      zundaImg.style.transform = 'scale(0.8) translateY(20px)';
+      zundaImg.src = `images/char/char_${data.charIndex}.png`;
+      setTimeout(() => {
+        zundaImg.style.transform = 'scale(1) translateY(0)';
+      }, 100);
+
+      bubbleText.innerHTML = '';
+      let charIdx = 0;
+      const speechText = data.speakerText;
+      
+      function type() {
+        if (charIdx < speechText.length) {
+          bubbleText.innerHTML += speechText.charAt(charIdx);
+          charIdx++;
+          typewriterTimeout = setTimeout(type, 20 / currentSpeed);
+        }
+      }
+      type();
+
+      speak(index);
+    }
+
+    function speak(index) {
+      const audioPath = `audio/slide_${index}.mp3?t=${new Date().getTime()}`;
+      speechAudio = new Audio(audioPath);
+      speechAudio.playbackRate = currentSpeed;
+      
+      let durationLoaded = false;
+      let hasError = false;
+      
+      speechAudio.addEventListener('loadedmetadata', () => {
+        if (hasError) return;
+        durationLoaded = true;
+        
+        currentDuration = 1000 + (speechAudio.duration * 1000) + 2500;
+        resetProgress();
+        if (autoPlay) {
+          startProgress(currentDuration);
+        }
+        
+        speechAudio.playTimeout = setTimeout(() => {
+          if (speechAudio && !hasError && autoPlay && currentSlide === index) {
+            speechAudio.play().catch(e => {
+              console.warn("Playback blocked by browser policy:", e);
+              if (e.name === "NotAllowedError") {
+                const currentBubbleText = bubbleText.innerHTML;
+                if (!currentBubbleText.includes("画面をクリックして")) {
+                  bubbleText.innerHTML = currentBubbleText + "<br><span style='color: var(--accent-cyan); font-size: 0.8rem;'>(※ブラウザのポリシーにより音声を再生するには画面をクリックしてくださいなのだ)</span>";
+                }
+              }
+            });
+          }
+        }, 1000 / currentSpeed);
+      });
+      
+      speechAudio.addEventListener('ended', () => {
+        if (autoPlay && !hasError) {
+          setTimeout(() => {
+            if (currentSlide === index && autoPlay) {
+              nextSlide();
+            }
+          }, 2500 / currentSpeed);
+        }
+      });
+
+      speechAudio.addEventListener('error', (e) => {
+        hasError = true;
+        console.warn("Failed to load local recorded audio", e);
+        showAudioMissingWarning(index);
+      });
+      
+      setTimeout(() => {
+        if (!durationLoaded && !hasError && speechAudio) {
+          currentDuration = 16000;
+          resetProgress();
+          if (autoPlay) {
+            startProgress(currentDuration);
+          }
+        }
+      }, 1500 / currentSpeed);
+    }
+
+    function showAudioMissingWarning(index) {
+      const currentBubbleText = bubbleText.innerHTML;
+      if (!currentBubbleText.includes("録音ファイル")) {
+        bubbleText.innerHTML = currentBubbleText + "<br><span style='color: var(--accent-pink); font-size: 0.8rem; font-weight: 500;'>(※ずんだもん録音ファイル「audio/slide_" + index + ".mp3」を読み込めないのだ。バックグラウンドで音声生成スクリプトを実行中かもしれないのだ)</span>";
+      }
+      
+      currentDuration = 15000;
+      resetProgress();
+      if (autoPlay) {
+        startProgress(currentDuration);
+      }
+    }
+
+    function stopSpeech() {
+      if (typewriterTimeout) {
+        clearTimeout(typewriterTimeout);
+        typewriterTimeout = null;
+      }
+      if (speechAudio) {
+        if (speechAudio.playTimeout) {
+          clearTimeout(speechAudio.playTimeout);
+        }
+        try {
+          if (speechAudio.pause) {
+            speechAudio.pause();
+          }
+        } catch(e) {}
+        speechAudio = null;
+      }
+    }
+
+    function startProgress(duration) {
+      if (progressAnimationId) return;
+      lastTimestamp = performance.now();
+      
+      function update(timestamp) {
+        if (!autoPlay) {
+          progressAnimationId = null;
+          return;
+        }
+        const dt = timestamp - lastTimestamp;
+        lastTimestamp = timestamp;
+        
+        progressPercent += (dt * currentSpeed) / duration * 100;
+        progressBar.style.width = `${Math.min(progressPercent, 100)}%`;
+        
+        if (progressPercent < 100) {
+          progressAnimationId = requestAnimationFrame(update);
+        } else {
+          progressAnimationId = null;
+          nextSlide();
+        }
+      }
+      
+      progressAnimationId = requestAnimationFrame(update);
+    }
+
+    function pauseProgress() {
+      if (progressAnimationId) {
+        cancelAnimationFrame(progressAnimationId);
+        progressAnimationId = null;
+      }
+    }
+
+    function resetProgress() {
+      if (progressAnimationId) {
+        cancelAnimationFrame(progressAnimationId);
+        progressAnimationId = null;
+      }
+      progressPercent = 0;
+      progressBar.style.width = '0%';
+    }
+
+    function nextSlide() {
+      if (currentSlide < SLIDES.length - 1) {
+        renderSlide(currentSlide + 1);
+      } else {
+        renderSlide(0);
+      }
+    }
+
+    function prevSlide() {
+      if (currentSlide > 0) {
+        renderSlide(currentSlide - 1);
+      }
+    }
+
+    function togglePlayPause() {
+      autoPlay = !autoPlay;
+      if (autoPlay) {
+        btnPlayPauseText.textContent = "一時停止";
+        playPauseIcon.innerHTML = '<rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/>';
+        if (speechAudio && speechAudio.play) {
+          speechAudio.play().catch(()=>{});
+        }
+        playBGM();
+        startProgress(currentDuration);
+      } else {
+        btnPlayPauseText.textContent = "自動再生";
+        playPauseIcon.innerHTML = '<polygon points="5 3 19 12 5 21 5 3"/>';
+        if (speechAudio && speechAudio.pause) {
+          speechAudio.pause();
+        }
+        pauseBGM();
+        pauseProgress();
+      }
+    }
+
+    window.addEventListener('DOMContentLoaded', init);
+  </script>
+</body>
+</html>
