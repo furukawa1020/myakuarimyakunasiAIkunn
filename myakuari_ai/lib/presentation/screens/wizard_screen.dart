@@ -90,8 +90,8 @@ class _WizardScreenState extends State<WizardScreen> {
         how: _howController.text.isEmpty ? '不明' : _howController.text,
         contactFrequency: _contactFrequency,
         initiative: _initiative.isEmpty ? '半々' : _initiative,
-        concreteness: _concreteness.isEmpty ? '止まる' : _concreteness,
-        continuation: _continuation.isEmpty ? '途切れた' : _continuation,
+        concreteness: _concreteness.isEmpty ? '未定' : _concreteness,
+        continuation: _continuation.isEmpty ? '普通' : _continuation,
         evidenceLevel: _evidenceLevel,
       );
 

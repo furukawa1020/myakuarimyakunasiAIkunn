@@ -21,47 +21,7 @@
   <meta name="twitter:image" content="https://your-domain.com/icons/Icon-512.png">
   <title>脈アリ！？脈ナシ！？教えて！AI君</title>
   <link rel="manifest" href="manifest.json">
-  <script>
-    // 古い Service Worker の登録解除とキャッシュの全クリアを強制し、即時リロードして最新の日本語版を読み込ませる
-    (function() {
-      var hasSW = false;
-      if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.getRegistrations().then(function(registrations) {
-          if (registrations && registrations.length > 0) {
-            hasSW = true;
-            console.log('[CacheBuster] Found ' + registrations.length + ' ServiceWorkers. Unregistering...');
-            var promises = [];
-            for (var i = 0; i < registrations.length; i++) {
-              promises.push(registrations[i].unregister());
-            }
-            Promise.all(promises).then(function() {
-              console.log('[CacheBuster] ServiceWorkers unregistered.');
-              clearCachesAndReload();
-            });
-          } else {
-            console.log('[CacheBuster] No ServiceWorkers registered.');
-          }
-        });
-      }
 
-      function clearCachesAndReload() {
-        if ('caches' in window) {
-          caches.keys().then(function(names) {
-            var promises = [];
-            for (var i = 0; i < names.length; i++) {
-              promises.push(caches.delete(names[i]));
-            }
-            Promise.all(promises).then(function() {
-              console.log('[CacheBuster] All caches cleared. Reloading page...');
-              window.location.reload();
-            });
-          });
-        } else {
-          window.location.reload();
-        }
-      }
-    })();
-  </script>
 </head>
 <body>
   <!-- ================================================================
@@ -95,6 +55,8 @@
         jitter:             0,
         dominantFreqHz:     0,
         spectrum:           new Array(16).fill(0),
+        supported:          !!(window.SpeechRecognition || window.webkitSpeechRecognition),
+        speechError:        '',
       };
 
       var _audioCtx        = null;
@@ -169,17 +131,36 @@
       }
 
       // ── Web Speech API セットアップ ────────────────────────────
-      function _startSpeech(timeoutMs) {
+      var _srRestartTimer = null;
+      var _watchdogTimer  = null;
+
+      function _createRecognition() {
         var SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-        if (!SR) { console.warn('[AudioScan] SpeechRecognition not supported'); return; }
+        if (!SR) {
+          console.warn('[AudioScan] SpeechRecognition not supported in this browser');
+          state.supported = false;
+          state.speechError = 'not-supported';
+          return;
+        }
 
-        _recognition = new SR();
-        _recognition.lang             = 'ja-JP';
-        _recognition.interimResults   = true;   // ← リアルタイム中間結果
-        _recognition.maxAlternatives  = 1;
-        _recognition.continuous       = true;   // 自動停止しない
+        // 既存インスタンスを確実に破棄
+        if (_recognition) {
+          try { _recognition.abort(); } catch(_) {}
+          _recognition = null;
+        }
 
-        _recognition.onresult = function(event) {
+        var rec = new SR();
+        rec.lang            = 'ja-JP';
+        rec.interimResults  = true;
+        rec.maxAlternatives = 1;
+        rec.continuous      = false; // false の方が安定して再起動できる
+
+        rec.onstart = function() {
+          console.log('[AudioScan] SpeechRecognition started OK');
+          state.speechError = '';
+        };
+
+        rec.onresult = function(event) {
           var interim = '';
           var finalText = '';
           for (var i = event.resultIndex; i < event.results.length; i++) {
@@ -190,27 +171,63 @@
               interim += text;
             }
           }
-          state.transcript        += finalText;
-          state.interimTranscript  = interim;
+          if (finalText)  state.transcript       += finalText;
+          state.interimTranscript = interim;
+          console.log('[AudioScan] result final="' + finalText + '" interim="' + interim + '"');
         };
 
-        _recognition.onerror = function(e) {
+        rec.onerror = function(e) {
           console.warn('[AudioScan] Speech error:', e.error);
-        };
-
-        _recognition.onend = function() {
-          // continuous=true でも途切れる場合があるため自動再起動
+          state.speechError = e.error || 'unknown';
+          // aborted は正常停止なので無視
+          if (e.error === 'aborted') return;
+          // その他エラーは少し待って再起動
           if (state.recording) {
-            try { _recognition.start(); } catch(_) {}
+            clearTimeout(_srRestartTimer);
+            _srRestartTimer = setTimeout(_createRecognition, 300);
           }
         };
 
-        try { _recognition.start(); } catch(e) {
-          console.warn('[AudioScan] Could not start recognition:', e);
-        }
+        rec.onend = function() {
+          console.log('[AudioScan] SpeechRecognition ended. recording=' + state.recording);
+          state.interimTranscript = '';
+          if (state.recording) {
+            clearTimeout(_srRestartTimer);
+            _srRestartTimer = setTimeout(_createRecognition, 200);
+          }
+        };
 
-        // タイムアウトで自動停止
-        setTimeout(function() { window.stopAudioScan(); }, timeoutMs || 10000);
+        _recognition = rec;
+        try {
+          rec.start();
+        } catch(e) {
+          console.warn('[AudioScan] start() threw:', e);
+          state.speechError = 'start-failed';
+          if (state.recording) {
+            clearTimeout(_srRestartTimer);
+            _srRestartTimer = setTimeout(_createRecognition, 500);
+          }
+        }
+      }
+
+      function _startSpeech(timeoutMs) {
+        _createRecognition();
+
+        // ウォッチドッグ: 2秒ごとに生存確認（万が一 onend が来なかった場合の保険）
+        _watchdogTimer = setInterval(function() {
+          if (!state.recording) {
+            clearInterval(_watchdogTimer);
+            return;
+          }
+          // _recognition が null になっていたら再起動
+          if (!_recognition) {
+            console.warn('[AudioScan] Watchdog: recognition is null, restarting...');
+            _createRecognition();
+          }
+        }, 2000);
+
+        // タイムアウト（デフォルト 1時間 = 事実上なし）
+        setTimeout(function() { window.stopAudioScan(); }, timeoutMs || 3600000);
       }
 
       // ── 公開API ──────────────────────────────────────────────
@@ -219,15 +236,26 @@
         state.recording         = true;
         state.transcript        = '';
         state.interimTranscript = '';
-        _startAudio().then(function() { _startSpeech(timeoutMs); });
+
+        // ★ SpeechRecognition を最初に起動（マイクを先に確保させる）
+        _startSpeech(timeoutMs);
+
+        // ★ 音量可視化は後から非同期で試みる（失敗しても文字起こしには影響しない）
+        setTimeout(function() {
+          _startAudio().catch(function(e) {
+            console.warn('[AudioScan] Audio visualization unavailable:', e);
+          });
+        }, 500);
       };
 
       window.stopAudioScan = function() {
         state.recording = false;
-        if (_metricsTimer) { clearInterval(_metricsTimer); _metricsTimer = null; }
-        if (_recognition)  { try { _recognition.stop(); } catch(_) {} _recognition = null; }
-        if (_stream)       { _stream.getTracks().forEach(function(t) { t.stop(); }); _stream = null; }
-        if (_audioCtx)     { _audioCtx.close(); _audioCtx = null; }
+        clearInterval(_metricsTimer);  _metricsTimer  = null;
+        clearInterval(_watchdogTimer); _watchdogTimer = null;
+        clearTimeout(_srRestartTimer); _srRestartTimer = null;
+        if (_recognition) { try { _recognition.abort(); } catch(_) {} _recognition = null; }
+        if (_stream)      { _stream.getTracks().forEach(function(t) { t.stop(); }); _stream = null; }
+        if (_audioCtx)    { _audioCtx.close(); _audioCtx = null; }
         _analyser = null;
       };
 
@@ -240,6 +268,8 @@
           jitter:             state.jitter,
           dominantFreqHz:     state.dominantFreqHz,
           spectrum:           state.spectrum,
+          supported:          state.supported,
+          speechError:        state.speechError,
         });
       };
 

@@ -289,15 +289,15 @@ class MLInferenceEngine {
       }
     }
 
-    // Jitter (声の震え) の直接融合
-    if (input.isVoice && input.voiceJitter != null) {
+    // Jitter (声の震え) の直接融合（実際に音声が検出された場合のみ適用）
+    if (input.isVoice && input.voiceJitter != null && input.voiceRms != null && input.voiceRms! > 5) {
       final jitter = input.voiceJitter!;
       if (jitter > 30) {
         likeO += 4.0;
       } else if (jitter > 12) {
         likeO += 2.0;
       } else {
-        likeO -= 1.0;
+        likeO -= 0.5; // ペナルティを緩和
       }
     }
     likeO = likeO.clamp(1.0, 10.0);
@@ -378,6 +378,11 @@ class MLInferenceEngine {
         logits[c] += coef[c][j] * scaled[j];
       }
     }
+    
+    // エンタメアプリとしての調整: リアルデータ（コロンビア大）は厳しすぎるため、少し前向きなバイアスをかける
+    logits[0] -= 1.0; // Nopeの確率を下げる
+    logits[2] += 0.8; // Likeの確率を少し上げる
+
     return logits;
   }
 
@@ -423,7 +428,7 @@ class MLInferenceEngine {
         descText = '声の震え率が中レベル ($jitter%)';
         reasonText = '意識している兆候・感情的興奮';
       } else {
-        impact = -6;
+        impact = -3;
         descText = '声の震えが極めて平坦 ($jitter%)';
         reasonText = '緊張感のない平常心・リラックス';
       }
@@ -551,10 +556,10 @@ class MLInferenceEngine {
   int _distortScore(int rawScore, Label label) {
     if (label == Label.like) {
       // 脈ありなら、最低でも65点、最高100点に近づける
-      return (65 + (rawScore * 0.35)).round().clamp(65, 99);
+      return (60 + (rawScore * 0.4)).round().clamp(60, 99);
     } else if (label == Label.nope) {
-      // 脈なしなら、0-40点の範囲に押し込める
-      return (rawScore * 0.8).round().clamp(5, 39);
+      // 脈なしなら、厳しすぎないよう10-45点の範囲に緩和
+      return (15 + rawScore * 0.6).round().clamp(10, 45);
     }
     // 中立なら40-64点
     return (40 + (rawScore * 0.24)).round().clamp(40, 64);
